@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+aiosqlite
+openai-whisper
+edge-tts
+jiwer
+yt-dlp
+python-multipart
+wordfreq

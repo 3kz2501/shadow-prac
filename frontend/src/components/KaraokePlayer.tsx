@@ -1,0 +1,163 @@
+import { useEffect, useState, useMemo, useImperativeHandle, forwardRef } from "react";
+import { ChunkDetail, WordTiming } from "../types";
+import { chunkTtsUrl, chunkAudioUrl } from "../api";
+import { useAudioPlayer } from "../hooks/useAudioPlayer";
+import { WordDisplay } from "./WordDisplay";
+
+export interface KaraokePlayerHandle {
+  restartAndPlay: () => void;
+  pause: () => void;
+}
+
+interface Props {
+  chunk: ChunkDetail;
+}
+
+function getSentenceBoundaries(words: WordTiming[]): number[] {
+  const boundaries: number[] = [0];
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i].word.trim();
+    if (/[.!?]$/.test(w) && i < words.length - 1) {
+      boundaries.push(i + 1);
+    }
+  }
+  return boundaries;
+}
+
+export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, ref) => {
+  const [useTts, setUseTts] = useState(true);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [showScript, setShowScript] = useState(true);
+
+  const player = useAudioPlayer({
+    onTimeUpdate: setCurrentTime,
+    startTime: useTts ? undefined : chunk.start_time,
+    endTime: useTts ? undefined : chunk.end_time,
+  });
+
+  const hasTtsWords = chunk.tts_words && chunk.tts_words.length > 0;
+  const words = useTts ? (hasTtsWords ? chunk.tts_words! : chunk.words) : chunk.words;
+  const timeOffset = useTts ? 0 : chunk.start_time;
+
+  const sentenceBoundaries = useMemo(() => getSentenceBoundaries(words), [words]);
+
+  const currentWordIndex = useMemo(() => {
+    const t = currentTime;
+    let result = -1;
+    for (let i = 0; i < words.length; i++) {
+      if (words[i].start - timeOffset <= t) result = i;
+      else break;
+    }
+    return result;
+  }, [words, currentTime, timeOffset]);
+
+  useEffect(() => {
+    const src = useTts ? chunkTtsUrl(chunk.id) : chunkAudioUrl(chunk.id);
+    player.load(src);
+    setCurrentTime(0);
+  }, [chunk.id, useTts]);
+
+  const restart = () => {
+    const t = useTts ? 0 : chunk.start_time;
+    player.seek(t);
+    setCurrentTime(t);
+  };
+
+  const restartAndPlay = () => {
+    const t = useTts ? 0 : chunk.start_time;
+    player.seek(t);
+    setCurrentTime(t);
+    // Small delay to let seek settle before playing
+    setTimeout(() => player.play(), 50);
+  };
+
+  useImperativeHandle(ref, () => ({
+    restartAndPlay,
+    pause: player.pause,
+  }));
+
+  const jumpSentence = (direction: -1 | 1) => {
+    let currentSentence = 0;
+    for (let i = sentenceBoundaries.length - 1; i >= 0; i--) {
+      if (currentWordIndex >= sentenceBoundaries[i]) {
+        currentSentence = i;
+        break;
+      }
+    }
+
+    let targetSentence = currentSentence + direction;
+    targetSentence = Math.max(0, Math.min(targetSentence, sentenceBoundaries.length - 1));
+
+    const targetWordIdx = sentenceBoundaries[targetSentence];
+    const targetTime = words[targetWordIdx].start - timeOffset;
+    player.seek(targetTime);
+    setCurrentTime(targetTime);
+  };
+
+  const jumpWord = (direction: -1 | 1) => {
+    let targetIdx = currentWordIndex + direction;
+    targetIdx = Math.max(0, Math.min(targetIdx, words.length - 1));
+    const targetTime = words[targetIdx].start - timeOffset;
+    player.seek(targetTime);
+    setCurrentTime(targetTime);
+  };
+
+  return (
+    <div className="karaoke-player">
+      <div className="controls-row">
+        <button onClick={player.isPlaying ? player.pause : player.play} className="btn btn-primary btn-play">
+          {player.isPlaying ? "Pause" : "Play"}
+        </button>
+        <span className="nav-separator" />
+        <button onClick={restart} className="btn btn-sm btn-nav">Restart</button>
+        <span className="nav-divider" />
+        <button onClick={() => jumpSentence(-1)} className="btn btn-sm btn-nav">&laquo; Sentence</button>
+        <button onClick={() => jumpWord(-1)} className="btn btn-sm btn-nav">&lsaquo; Word</button>
+        <button onClick={() => jumpWord(1)} className="btn btn-sm btn-nav">Word &rsaquo;</button>
+        <button onClick={() => jumpSentence(1)} className="btn btn-sm btn-nav">Sentence &raquo;</button>
+      </div>
+
+      <div className="controls-row controls-secondary">
+        <span className="control-label">Voice:</span>
+        <div className="audio-toggle">
+          <button
+            className={`btn btn-sm ${useTts ? "btn-active" : ""}`}
+            onClick={() => setUseTts(true)}
+          >
+            Synth
+          </button>
+          <button
+            className={`btn btn-sm ${!useTts ? "btn-active" : ""}`}
+            onClick={() => setUseTts(false)}
+          >
+            Original
+          </button>
+        </div>
+
+        <div className="speed-control">
+          <label>Speed: {player.playbackRate.toFixed(1)}x</label>
+          <input
+            type="range"
+            min="0.5"
+            max="2.0"
+            step="0.1"
+            value={player.playbackRate}
+            onChange={(e) => player.changeRate(parseFloat(e.target.value))}
+          />
+        </div>
+      </div>
+
+      <button
+        className="toggle-disclosure"
+        onClick={() => setShowScript(!showScript)}
+      >
+        <span className={`disclosure-arrow ${showScript ? "open" : ""}`}>&#9654;</span>
+        {showScript ? "Hide Script" : "Show Script"}
+      </button>
+
+      {showScript && (
+        <WordDisplay words={words} currentTime={currentTime} timeOffset={timeOffset} />
+      )}
+    </div>
+  );
+});
