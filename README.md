@@ -1,5 +1,7 @@
 # ShadowPrac
 
+[日本語版 README](README.ja.md)
+
 English shadowing practice app. Import audio from YouTube or local files, get automatic transcription and chunking, then practice with karaoke-style playback, recording, and pronunciation scoring.
 
 > **Disclaimer**: This tool is for personal educational use only. Users are responsible for complying with the terms of service of any content platform they use with this tool.
