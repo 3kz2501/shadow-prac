@@ -4,7 +4,6 @@ import { scoreRecordingUrl } from "../api";
 
 interface Props {
   score: ScoreResult;
-  referenceText: string;
 }
 
 function AlignmentView({ alignment }: { alignment: AlignmentItem[] }) {
@@ -56,7 +55,7 @@ function AlignmentView({ alignment }: { alignment: AlignmentItem[] }) {
   );
 }
 
-export function ScoreDisplay({ score, referenceText }: Props) {
+export function ScoreDisplay({ score }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
 

@@ -59,7 +59,6 @@ export function PracticePage() {
             <p className="text-muted">Record starts playback from the beginning. Shadow along!</p>
             <Recorder
               chunkId={currentChunk.id}
-              referenceText={currentChunk.text}
               onRecordStart={handleRecordStart}
               onRecordStop={handleRecordStop}
             />

@@ -10,16 +10,39 @@ from config import AUDIO_DIR
 
 
 def _to_wav(input_path: Path, session_id: str) -> Path:
-    """Convert any audio/video file to 16kHz mono WAV."""
+    """Convert any audio/video file to 16kHz mono WAV with noise reduction
+    and silence compression."""
     wav_path = AUDIO_DIR / f"{session_id}.wav"
+
+    # Audio filters:
+    # 1. afftdn: FFT-based noise reduction (nf=-25 = noise floor)
+    # 2. silenceremove: compress long silences (>0.5s, below -40dB)
+    af_filters = ",".join([
+        "afftdn=nf=-25",
+        "silenceremove=stop_periods=-1:stop_duration=0.5:stop_threshold=-40dB:detection=peak",
+    ])
+
     result = subprocess.run(
-        ["ffmpeg", "-y", "-i", str(input_path), "-ar", "16000", "-ac", "1", str(wav_path)],
+        [
+            "ffmpeg", "-y", "-i", str(input_path),
+            "-af", af_filters,
+            "-ar", "16000", "-ac", "1",
+            str(wav_path),
+        ],
         capture_output=True,
         text=True,
         timeout=300,
     )
     if result.returncode != 0:
-        raise RuntimeError(f"ffmpeg conversion failed: {result.stderr[-500:]}")
+        # Fallback: try without filters (in case arnndn model not found etc.)
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(input_path), "-ar", "16000", "-ac", "1", str(wav_path)],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"ffmpeg conversion failed: {result.stderr[-500:]}")
 
     if input_path != wav_path and input_path.exists():
         input_path.unlink()

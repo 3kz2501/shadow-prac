@@ -34,6 +34,19 @@
 
 `Ctrl+C` で両方停止します。
 
+## Docker
+
+```bash
+docker compose up --build
+```
+
+http://localhost:3000 を開いてください。データはDockerボリューム（`backend-data`）に永続化されます。
+
+```bash
+docker compose down       # 停止
+docker compose down -v    # 停止 + データ削除
+```
+
 ## 手動セットアップ
 
 ### バックエンド

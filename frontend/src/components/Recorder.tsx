@@ -6,7 +6,6 @@ import { ScoreDisplay } from "./ScoreDisplay";
 
 interface Props {
   chunkId: string;
-  referenceText: string;
   onRecordStart?: () => void;
   onRecordStop?: () => void;
 }
@@ -22,7 +21,7 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export function Recorder({ chunkId, referenceText, onRecordStart, onRecordStop }: Props) {
+export function Recorder({ chunkId, onRecordStart, onRecordStop }: Props) {
   const { start, stop, isRecording } = useRecorder();
   const [currentScore, setCurrentScore] = useState<ScoreResult | null>(null);
   const [history, setHistory] = useState<ScoreResult[]>([]);
@@ -92,7 +91,7 @@ export function Recorder({ chunkId, referenceText, onRecordStart, onRecordStop }
         )}
       </div>
 
-      {currentScore && <ScoreDisplay score={currentScore} referenceText={referenceText} />}
+      {currentScore && <ScoreDisplay score={currentScore} />}
     </div>
   );
 }

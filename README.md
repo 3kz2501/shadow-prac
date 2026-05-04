@@ -36,6 +36,19 @@ This starts both backend and frontend in one terminal. Open http://localhost:517
 
 Press `Ctrl+C` to stop both servers.
 
+## Docker
+
+```bash
+docker compose up --build
+```
+
+Open http://localhost:3000. Data is persisted in a Docker volume (`backend-data`).
+
+```bash
+docker compose down       # stop
+docker compose down -v    # stop and delete data
+```
+
 ## Manual setup
 
 ### Backend
