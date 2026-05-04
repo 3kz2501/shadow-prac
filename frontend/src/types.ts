@@ -42,6 +42,12 @@ export interface ChunkDetail {
   has_tts: boolean;
 }
 
+export interface AlignmentItem {
+  type: "equal" | "substitute" | "delete" | "insert";
+  ref: string | null;
+  hyp: string | null;
+}
+
 export interface ScoreResult {
   id: string;
   wer: number;
@@ -52,6 +58,7 @@ export interface ScoreResult {
   deletions: number;
   substitutions: number;
   created_at: string | null;
+  alignment: AlignmentItem[] | null;
 }
 
 export interface VocabWord {

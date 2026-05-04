@@ -5,6 +5,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 
 from db import get_db
 from config import RECORDINGS_DIR
@@ -59,6 +60,7 @@ async def score_chunk(chunk_id: str, file: UploadFile = File(...)) -> ScoreResul
         deletions=result["deletions"],
         substitutions=result["substitutions"],
         created_at=score_row["created_at"] if score_row else None,
+        alignment=result.get("alignment"),
     )
 
 
@@ -83,5 +85,23 @@ async def list_scores(chunk_id: str) -> list[ScoreResult]:
             deletions=details.get("deletions", 0),
             substitutions=details.get("substitutions", 0),
             created_at=r["created_at"],
+            alignment=details.get("alignment"),
         ))
     return results
+
+
+@router.get("/api/scores/{score_id}/recording")
+async def serve_recording(score_id: str):
+    db = await get_db()
+    cursor = await db.execute("SELECT recording_path FROM scores WHERE id = ?", (score_id,))
+    row = await cursor.fetchone()
+    if not row or not row["recording_path"]:
+        raise HTTPException(404, "Recording not found")
+    path = Path(row["recording_path"])
+    # Also check for WAV version (converted during scoring)
+    wav_path = path.with_suffix(".wav")
+    if wav_path.exists():
+        return FileResponse(wav_path, media_type="audio/wav")
+    if not path.exists():
+        raise HTTPException(404, "Recording file missing")
+    return FileResponse(path, media_type="audio/webm")

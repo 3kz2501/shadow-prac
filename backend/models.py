@@ -49,6 +49,12 @@ class ChunkDetail(BaseModel):
     has_tts: bool = False
 
 
+class AlignmentItem(BaseModel):
+    type: str          # equal, substitute, delete, insert
+    ref: str | None
+    hyp: str | None
+
+
 class ScoreResult(BaseModel):
     id: str
     wer: float
@@ -59,6 +65,7 @@ class ScoreResult(BaseModel):
     deletions: int
     substitutions: int
     created_at: str | None = None
+    alignment: list[AlignmentItem] | None = None
 
 
 class VocabWord(BaseModel):

@@ -32,3 +32,7 @@ export function chunkTtsUrl(chunkId: string): string {
 export function chunkAudioUrl(chunkId: string): string {
   return `${BASE}/api/chunks/${chunkId}/audio`;
 }
+
+export function scoreRecordingUrl(scoreId: string): string {
+  return `${BASE}/api/scores/${scoreId}/recording`;
+}
