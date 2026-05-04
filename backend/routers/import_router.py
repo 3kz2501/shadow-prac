@@ -100,16 +100,23 @@ async def import_content(
     background_tasks: BackgroundTasks,
     url: str | None = Form(None),
     file: UploadFile | None = File(None),
+    start_time: str | None = Form(None),
+    end_time: str | None = Form(None),
 ):
     session_id = str(uuid.uuid4())
 
+    # Parse optional time range
+    from services.downloader import _parse_time
+    st = _parse_time(start_time) if start_time else None
+    et = _parse_time(end_time) if end_time else None
+
     if url:
-        audio_path, title = download_youtube(url, session_id)
+        audio_path, title = download_youtube(url, session_id, start_time=st, end_time=et)
         source_url = url
         source_file = None
     elif file:
         content = await file.read()
-        audio_path, title = save_uploaded_file(content, file.filename or "upload", session_id)
+        audio_path, title = save_uploaded_file(content, file.filename or "upload", session_id, start_time=st, end_time=et)
         source_url = None
         source_file = file.filename
     else:

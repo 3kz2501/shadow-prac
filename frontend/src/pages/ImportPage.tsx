@@ -5,6 +5,8 @@ import { SessionStatus } from "../types";
 
 export function ImportPage() {
   const [url, setUrl] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
@@ -36,6 +38,11 @@ export function ImportPage() {
     poll();
   };
 
+  const appendTimeFields = (form: FormData) => {
+    if (startTime.trim()) form.append("start_time", startTime.trim());
+    if (endTime.trim()) form.append("end_time", endTime.trim());
+  };
+
   const handleUrl = async () => {
     if (!url.trim()) return;
     setImporting(true);
@@ -43,6 +50,7 @@ export function ImportPage() {
     try {
       const form = new FormData();
       form.append("url", url.trim());
+      appendTimeFields(form);
       const res = await postForm<{ session_id: string }>("/api/import", form);
       pollStatus(res.session_id);
     } catch (e: any) {
@@ -59,6 +67,7 @@ export function ImportPage() {
     try {
       const form = new FormData();
       form.append("file", file);
+      appendTimeFields(form);
       const res = await postForm<{ session_id: string }>("/api/import", form);
       pollStatus(res.session_id);
     } catch (err: any) {
@@ -100,6 +109,36 @@ export function ImportPage() {
           onChange={handleFile}
           disabled={importing}
         />
+      </div>
+
+      <div className="import-section time-range-section">
+        <h2>Time Range (optional)</h2>
+        <p className="text-muted">Specify start/end to import only a portion. Accepts seconds, m:ss, or h:mm:ss.</p>
+        <div className="time-range-row">
+          <div className="time-field">
+            <label>Start</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. 1:30"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              disabled={importing}
+            />
+          </div>
+          <div className="time-field">
+            <label>End</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. 5:00"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              disabled={importing}
+            />
+          </div>
+        </div>
+        <p className="text-muted">YouTube URLs with ?t= are auto-detected as start time.</p>
       </div>
 
       {importing && (

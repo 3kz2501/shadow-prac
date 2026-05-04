@@ -37,19 +37,17 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, 
 
   const hasTtsWords = chunk.tts_words && chunk.tts_words.length > 0;
   const words = useTts ? (hasTtsWords ? chunk.tts_words! : chunk.words) : chunk.words;
-  const timeOffset = useTts ? 0 : chunk.start_time;
 
   const sentenceBoundaries = useMemo(() => getSentenceBoundaries(words), [words]);
 
   const currentWordIndex = useMemo(() => {
-    const t = currentTime;
     let result = -1;
     for (let i = 0; i < words.length; i++) {
-      if (words[i].start - timeOffset <= t) result = i;
+      if (words[i].start <= currentTime) result = i;
       else break;
     }
     return result;
-  }, [words, currentTime, timeOffset]);
+  }, [words, currentTime]);
 
   useEffect(() => {
     const src = useTts ? chunkTtsUrl(chunk.id) : chunkAudioUrl(chunk.id);
@@ -89,7 +87,7 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, 
     targetSentence = Math.max(0, Math.min(targetSentence, sentenceBoundaries.length - 1));
 
     const targetWordIdx = sentenceBoundaries[targetSentence];
-    const targetTime = words[targetWordIdx].start - timeOffset;
+    const targetTime = words[targetWordIdx].start;
     player.seek(targetTime);
     setCurrentTime(targetTime);
   };
@@ -97,7 +95,7 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, 
   const jumpWord = (direction: -1 | 1) => {
     let targetIdx = currentWordIndex + direction;
     targetIdx = Math.max(0, Math.min(targetIdx, words.length - 1));
-    const targetTime = words[targetIdx].start - timeOffset;
+    const targetTime = words[targetIdx].start;
     player.seek(targetTime);
     setCurrentTime(targetTime);
   };
@@ -156,7 +154,7 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, 
       </button>
 
       {showScript && (
-        <WordDisplay words={words} currentTime={currentTime} timeOffset={timeOffset} />
+        <WordDisplay words={words} currentTime={currentTime} />
       )}
     </div>
   );

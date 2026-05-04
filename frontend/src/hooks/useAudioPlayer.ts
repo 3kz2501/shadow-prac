@@ -9,10 +9,16 @@ interface UseAudioPlayerOptions {
 export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number>(0);
+  const optionsRef = useRef(options);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1.0);
+  const playbackRateRef = useRef(playbackRate);
+
+  // Keep refs in sync
+  useEffect(() => { optionsRef.current = options; });
+  useEffect(() => { playbackRateRef.current = playbackRate; }, [playbackRate]);
 
   const tick = useCallback(() => {
     const audio = audioRef.current;
@@ -20,10 +26,10 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
 
     const t = audio.currentTime;
     setCurrentTime(t);
-    options.onTimeUpdate?.(t);
+    optionsRef.current.onTimeUpdate?.(t);
 
-    // Stop at endTime if specified
-    if (options.endTime && t >= options.endTime) {
+    const { endTime } = optionsRef.current;
+    if (endTime && t >= endTime) {
       audio.pause();
       setIsPlaying(false);
       return;
@@ -32,7 +38,7 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
     if (!audio.paused) {
       rafRef.current = requestAnimationFrame(tick);
     }
-  }, [options.endTime, options.onTimeUpdate]);
+  }, []);
 
   const load = useCallback((src: string) => {
     if (audioRef.current) {
@@ -46,8 +52,9 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
 
     audio.addEventListener("loadedmetadata", () => {
       setDuration(audio.duration);
-      if (options.startTime) {
-        audio.currentTime = options.startTime;
+      const { startTime } = optionsRef.current;
+      if (startTime) {
+        audio.currentTime = startTime;
       }
     });
 
@@ -55,20 +62,21 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
       setIsPlaying(false);
     });
 
-    audio.playbackRate = playbackRate;
-  }, [options.startTime, playbackRate]);
+    audio.playbackRate = playbackRateRef.current;
+  }, []);
 
   const play = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (options.startTime && audio.currentTime < options.startTime) {
-      audio.currentTime = options.startTime;
+    const { startTime } = optionsRef.current;
+    if (startTime && audio.currentTime < startTime) {
+      audio.currentTime = startTime;
     }
-    audio.playbackRate = playbackRate;
+    audio.playbackRate = playbackRateRef.current;
     audio.play();
     setIsPlaying(true);
     rafRef.current = requestAnimationFrame(tick);
-  }, [tick, options.startTime, playbackRate]);
+  }, [tick]);
 
   const pause = useCallback(() => {
     audioRef.current?.pause();
@@ -85,6 +93,7 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
 
   const changeRate = useCallback((rate: number) => {
     setPlaybackRate(rate);
+    playbackRateRef.current = rate;
     if (audioRef.current) {
       audioRef.current.playbackRate = rate;
     }

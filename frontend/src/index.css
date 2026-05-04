@@ -146,6 +146,29 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
 .import-section { margin-bottom: 24px; }
 .import-divider { text-align: center; color: var(--muted); margin: 16px 0; }
 
+.time-range-section { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+.time-range-row {
+  display: flex;
+  gap: 16px;
+  margin: 8px 0;
+}
+
+.time-field {
+  flex: 1;
+}
+
+.time-field label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.time-field .input {
+  width: 100%;
+}
+
 .import-progress {
   margin-top: 24px;
   text-align: center;
