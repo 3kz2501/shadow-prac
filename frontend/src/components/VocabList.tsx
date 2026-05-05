@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { VocabWord } from "../types";
 import { fetchJson, ttsWordUrl } from "../api";
+import { WordTooltip } from "./WordTooltip";
 
 interface Props {
   sessionId: string;
@@ -107,18 +108,20 @@ export function VocabList({ sessionId }: Props) {
 
       <div className="vocab-grid">
         {sorted.slice(0, 200).map((w) => (
-          <div key={w.word} className="vocab-item" onClick={() => playWord(w.word)}>
-            <span className="vocab-word">{w.word}</span>
-            <span className="vocab-meta">
-              <span
-                className="vocab-level"
-                style={{ color: LEVEL_COLORS[w.level] }}
-              >
-                {w.level}
+          <WordTooltip key={w.word} word={w.word}>
+            <div className="vocab-item" onClick={() => playWord(w.word)}>
+              <span className="vocab-word">{w.word}</span>
+              <span className="vocab-meta">
+                <span
+                  className="vocab-level"
+                  style={{ color: LEVEL_COLORS[w.level] }}
+                >
+                  {w.level}
+                </span>
+                <span className="vocab-freq">{w.frequency}x</span>
               </span>
-              <span className="vocab-freq">{w.frequency}x</span>
-            </span>
-          </div>
+            </div>
+          </WordTooltip>
         ))}
       </div>
       {sorted.length > 200 && (

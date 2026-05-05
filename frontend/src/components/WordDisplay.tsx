@@ -1,5 +1,6 @@
 import { WordTiming } from "../types";
 import { useMemo } from "react";
+import { WordTooltip } from "./WordTooltip";
 
 interface Props {
   words: WordTiming[];
@@ -33,9 +34,11 @@ export function WordDisplay({ words, currentTime }: Props) {
         else if (i === currentIndex) cls = "word current";
 
         return (
-          <span key={i} className={cls}>
-            {w.word}{" "}
-          </span>
+          <WordTooltip key={i} word={w.word}>
+            <span className={cls}>
+              {w.word}{" "}
+            </span>
+          </WordTooltip>
         );
       })}
     </div>

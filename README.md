@@ -17,7 +17,11 @@ English shadowing practice app. Import audio from YouTube or local files, get au
 - **Shadowing practice**: record yourself, get WER-based pronunciation score
 - **Score history**: track your progress per chunk
 - **Vocabulary list**: extracted content words with CEFR difficulty levels (A1-C1+), frequency sorting, and individual word TTS playback
-- **Script toggle**: show/hide karaoke subtitles and full text (hidden by default for effective shadowing)
+- **Script toggle**: show/hide karaoke subtitles and full text
+- **Word alignment**: color-coded diff after scoring (correct / substituted / deleted / inserted)
+- **Japanese dictionary**: hover any word for Japanese translation (EJDict-hand, ~45k words)
+- **Audio cleanup**: background noise reduction and silence compression on import
+- **Time range import**: specify start/end times for YouTube URLs or local files
 
 ## Prerequisites
 
@@ -120,6 +124,9 @@ On the session detail page, switch to the **Vocabulary** tab.
 - **Sort** by difficulty, frequency, or alphabetical order
 - **Filter** by level (click level buttons) or search by text
 - **Click any word** to hear its pronunciation
+- **Hover any word** to see its Japanese translation (powered by [EJDict-hand](https://github.com/kujirahand/EJDict), ~45k words, Public Domain)
+
+The same word tooltip also works on the karaoke script view.
 
 ## Configuration
 
@@ -157,7 +164,10 @@ shadow-prac/
 │   │   ├── text_processing.py # Filler removal, chunking
 │   │   ├── tts_service.py   # edge-tts with word timings
 │   │   ├── scorer.py        # WER scoring via jiwer
-│   │   └── word_level.py    # CEFR level estimation via wordfreq
+│   │   ├── word_level.py    # CEFR level estimation via wordfreq
+│   │   └── dictionary.py   # EJDict-hand lookup
+│   ├── dict/
+│   │   └── ejdict.txt       # EN-JA dictionary (Public Domain, bundled)
 │   └── data/                # Runtime data (gitignored)
 ├── frontend/
 │   ├── src/

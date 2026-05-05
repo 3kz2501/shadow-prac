@@ -584,3 +584,45 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
 }
 
 .level-btn { font-weight: 600; font-size: 12px !important; }
+
+/* Word tooltip */
+.word-tooltip-trigger {
+  position: relative;
+  cursor: default;
+}
+
+.word-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: #1a1b23;
+  color: #f3f4f6;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: 6px;
+  white-space: nowrap;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.word-tooltip-empty {
+  font-style: italic;
+  color: #9ca3af;
+}
+
+.word-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1a1b23;
+}
