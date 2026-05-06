@@ -6,11 +6,13 @@ from pathlib import Path
 
 from piper import PiperVoice
 
+import os
+
 from config import TTS_DIR, BASE_DIR
 
 _voice: PiperVoice | None = None
 
-PIPER_MODEL_DIR = BASE_DIR / "data" / "piper"
+PIPER_MODEL_DIR = Path(os.environ.get("PIPER_MODEL_DIR", str(BASE_DIR / "data" / "piper")))
 PIPER_MODEL_NAME = "en_US-lessac-medium"
 
 

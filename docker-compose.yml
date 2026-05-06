@@ -5,6 +5,7 @@ services:
       - backend-data:/app/data
     environment:
       - WHISPER_MODEL=base
+      - PIPER_MODEL_DIR=/models/piper
     restart: unless-stopped
 
   frontend:

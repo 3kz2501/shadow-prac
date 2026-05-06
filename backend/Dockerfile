@@ -17,13 +17,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p data/audio data/tts data/recordings data/piper
+RUN mkdir -p data/audio data/tts data/recordings
 
-# Download piper voice model
-RUN curl -sL "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx" \
-    -o data/piper/en_US-lessac-medium.onnx && \
+# Download piper voice model to a location outside the data volume
+RUN mkdir -p /models/piper && \
+    curl -sL "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx" \
+    -o /models/piper/en_US-lessac-medium.onnx && \
     curl -sL "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json" \
-    -o data/piper/en_US-lessac-medium.onnx.json
+    -o /models/piper/en_US-lessac-medium.onnx.json
 
 EXPOSE 8000
 
