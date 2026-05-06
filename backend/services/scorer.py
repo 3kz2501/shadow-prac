@@ -35,7 +35,7 @@ def score_recording(
         wav_path = recording_path
 
     from config import WHISPER_SCORING_MODEL, WHISPER_ENGINE
-    result = transcribe(wav_path, engine=engine or WHISPER_ENGINE, model=model or WHISPER_SCORING_MODEL)
+    result = transcribe(wav_path, engine=engine or WHISPER_ENGINE, model=model or WHISPER_SCORING_MODEL, language="en")
     hypothesis = result.text.strip()
 
     ref_norm = _normalize(reference_text)

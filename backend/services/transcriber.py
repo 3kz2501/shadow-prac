@@ -30,21 +30,21 @@ class TranscribeResult:
     duration: float
 
 
-def transcribe(audio_path: str | Path, engine: str | None = None, model: str | None = None) -> TranscribeResult:
+def transcribe(audio_path: str | Path, engine: str | None = None, model: str | None = None, language: str | None = "en") -> TranscribeResult:
     engine = engine or WHISPER_ENGINE
     model = model or WHISPER_MODEL
 
     if engine == "faster-whisper":
-        return _transcribe_faster(str(audio_path), model)
+        return _transcribe_faster(str(audio_path), model, language)
     else:
-        return _transcribe_openai(str(audio_path), model)
+        return _transcribe_openai(str(audio_path), model, language)
 
 
-def _transcribe_openai(audio_path: str, model_name: str) -> TranscribeResult:
+def _transcribe_openai(audio_path: str, model_name: str, language: str | None = "en") -> TranscribeResult:
     import whisper
 
     model = whisper.load_model(model_name)
-    result = model.transcribe(audio_path, word_timestamps=True)
+    result = model.transcribe(audio_path, word_timestamps=True, language=language)
 
     segments = []
     for seg in result.get("segments", []):
@@ -71,11 +71,11 @@ def _transcribe_openai(audio_path: str, model_name: str) -> TranscribeResult:
     )
 
 
-def _transcribe_faster(audio_path: str, model_name: str) -> TranscribeResult:
+def _transcribe_faster(audio_path: str, model_name: str, language: str | None = "en") -> TranscribeResult:
     from faster_whisper import WhisperModel
 
     model = WhisperModel(model_name, compute_type="int8")
-    raw_segments, info = model.transcribe(audio_path, word_timestamps=True)
+    raw_segments, info = model.transcribe(audio_path, word_timestamps=True, language=language)
 
     segments = []
     full_text_parts = []
