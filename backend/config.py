@@ -17,8 +17,8 @@ WHISPER_ENGINE = "openai-whisper"  # or "faster-whisper"
 WHISPER_MODEL = "base"             # tiny/base/small/medium/large
 WHISPER_SCORING_MODEL = "base"     # model used for scoring recordings
 
-# TTS
-TTS_VOICE = "en-US-GuyNeural"
+# TTS (piper)
+TTS_PIPER_MODEL = "en_US-lessac-medium"
 
 # Server
 HOST = "0.0.0.0"

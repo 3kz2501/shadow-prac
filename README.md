@@ -6,13 +6,15 @@ English shadowing practice app. Import audio from YouTube or local files, get au
 
 > **Disclaimer**: This tool is for personal educational use only. Users are responsible for complying with the terms of service of any content platform they use with this tool.
 
+> **Privacy**: Once content is imported, all processing runs locally — transcription (Whisper), TTS (piper), scoring, and dictionary lookup. No audio or text is sent to external servers. The only network access is during YouTube download (yt-dlp) and initial piper voice model download.
+
 ## Features
 
 - **Import** from YouTube URL or local audio/video files
 - **Auto transcription** via OpenAI Whisper (word-level timestamps)
 - **Smart chunking** into ~30-90 second segments at natural boundaries
 - **Karaoke playback** with word-by-word highlighting synced to audio
-- **Synth / Original** voice toggle (edge-tts generated or source audio)
+- **Synth / Original** voice toggle (piper TTS, fully offline, or source audio)
 - **Playback controls**: restart, sentence/word skip, speed adjustment (0.5x-2.0x)
 - **Shadowing practice**: record yourself, get WER-based pronunciation score
 - **Score history**: track your progress per chunk
@@ -107,7 +109,7 @@ Click any chunk to open the practice page.
 
 **Script**: click "Show Script" to reveal karaoke subtitles. Hidden by default — shadowing is more effective when you listen rather than read.
 
-**Recording**:
+**Recording** (headphones recommended for best accuracy):
 1. Click **Record** — playback starts from the beginning automatically
 2. Shadow along with the audio
 3. Click **Stop & Score** — your recording is transcribed and compared against the reference text
@@ -137,7 +139,7 @@ Edit `backend/config.py`:
 | `WHISPER_ENGINE` | `openai-whisper` | `openai-whisper` or `faster-whisper` |
 | `WHISPER_MODEL` | `base` | Whisper model size: tiny/base/small/medium/large |
 | `WHISPER_SCORING_MODEL` | `base` | Model used for scoring recordings |
-| `TTS_VOICE` | `en-US-GuyNeural` | edge-tts voice name |
+| `TTS_PIPER_MODEL` | `en_US-lessac-medium` | Piper voice model name |
 | `PORT` | `8000` | Backend server port |
 
 ## Project structure
@@ -183,6 +185,6 @@ shadow-prac/
 
 ## Tech stack
 
-- **Backend**: Python, FastAPI, SQLite, OpenAI Whisper, edge-tts, jiwer, yt-dlp, wordfreq
+- **Backend**: Python, FastAPI, SQLite, OpenAI Whisper, piper-tts, jiwer, yt-dlp, wordfreq
 - **Frontend**: React, TypeScript, Vite
 - **Audio**: Web Audio API (browser), ffmpeg (server)

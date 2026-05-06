@@ -22,6 +22,18 @@ if [ ! -d "$DIR/frontend/node_modules" ]; then
   cd "$DIR/frontend" && npm install --silent
 fi
 
+# Download piper voice model if needed
+PIPER_DIR="$DIR/backend/data/piper"
+PIPER_MODEL="en_US-lessac-medium"
+if [ ! -f "$PIPER_DIR/$PIPER_MODEL.onnx" ]; then
+  echo -e "${GREEN}Downloading piper voice model...${NC}"
+  mkdir -p "$PIPER_DIR"
+  curl -sL "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/$PIPER_MODEL.onnx" \
+    -o "$PIPER_DIR/$PIPER_MODEL.onnx"
+  curl -sL "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/$PIPER_MODEL.onnx.json" \
+    -o "$PIPER_DIR/$PIPER_MODEL.onnx.json"
+fi
+
 # Start backend
 echo -e "${GREEN}Starting backend on :8000${NC}"
 cd "$DIR/backend"

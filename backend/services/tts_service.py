@@ -1,71 +1,98 @@
-"""TTS generation with word-level timing using edge-tts."""
+"""TTS generation with word-level timing using piper (fully offline)."""
 
-import re
+import subprocess
+import wave
 from pathlib import Path
 
-import edge_tts
+from piper import PiperVoice
 
-from config import TTS_VOICE, TTS_DIR
+from config import TTS_DIR, BASE_DIR
+
+_voice: PiperVoice | None = None
+
+PIPER_MODEL_DIR = BASE_DIR / "data" / "piper"
+PIPER_MODEL_NAME = "en_US-lessac-medium"
 
 
-def _restore_punctuation(text: str, word_boundaries: list[dict]) -> list[dict]:
-    """Restore punctuation from source text to TTS word boundaries.
+def _get_voice() -> PiperVoice:
+    global _voice
+    if _voice is None:
+        model_path = PIPER_MODEL_DIR / f"{PIPER_MODEL_NAME}.onnx"
+        if not model_path.exists():
+            raise RuntimeError(
+                f"Piper voice model not found at {model_path}. "
+                f"Run: mkdir -p {PIPER_MODEL_DIR} && "
+                f"curl -L https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/{PIPER_MODEL_NAME}.onnx -o {model_path} && "
+                f"curl -L https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/{PIPER_MODEL_NAME}.onnx.json -o {model_path}.json"
+            )
+        _voice = PiperVoice.load(str(model_path))
+    return _voice
 
-    edge-tts WordBoundary strips punctuation, so we match each boundary word
-    back to the original text and re-attach trailing punctuation.
-    """
-    # Split text into tokens preserving punctuation (e.g. "Hello," "story." "real.")
-    tokens = text.split()
-    token_idx = 0
 
-    for wb in word_boundaries:
-        bare = wb["word"]
-        # Find the matching token in the source text
-        while token_idx < len(tokens):
-            token_lower = tokens[token_idx].lower().strip("'\"()")
-            bare_lower = bare.lower()
-            # Match if token starts with the bare word
-            if token_lower.startswith(bare_lower) or bare_lower.startswith(token_lower.rstrip(".,!?;:'\"")):
-                # Re-attach trailing punctuation from the original token
-                token = tokens[token_idx]
-                # Find where the word ends and punctuation begins
-                match = re.match(r"^['\"]?(.+?)[.,!?;:'\")]*$", token)
-                if match:
-                    suffix = token[match.end(1):]
-                    wb["word"] = bare + suffix
-                token_idx += 1
-                break
-            token_idx += 1
+def _synthesize_wav(text: str, wav_path: Path) -> None:
+    """Synthesize text to WAV file using piper."""
+    voice = _get_voice()
+    with wave.open(str(wav_path), "wb") as wav:
+        voice.synthesize_wav(text, wav)
 
-    return word_boundaries
+
+def _wav_to_mp3(wav_path: Path, mp3_path: Path) -> None:
+    """Convert WAV to MP3 using ffmpeg."""
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(wav_path), "-codec:a", "libmp3lame", "-q:a", "2", str(mp3_path)],
+        capture_output=True,
+        timeout=60,
+    )
+    wav_path.unlink(missing_ok=True)
+
+
+def _get_word_timings(wav_path: Path) -> list[dict]:
+    """Extract word-level timings from audio using Whisper."""
+    import whisper
+    from config import WHISPER_MODEL
+
+    # Whisper expects 16kHz; piper outputs 22050Hz — convert first
+    wav_16k = wav_path.with_name(wav_path.stem + "_16k.wav")
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(wav_path), "-ar", "16000", "-ac", "1", str(wav_16k)],
+        capture_output=True,
+        timeout=30,
+    )
+
+    model = whisper.load_model(WHISPER_MODEL)
+    result = model.transcribe(str(wav_16k), word_timestamps=True)
+    wav_16k.unlink(missing_ok=True)
+
+    words = []
+    for seg in result.get("segments", []):
+        for w in seg.get("words", []):
+            word_text = w.get("word", "").strip()
+            if word_text:
+                words.append({
+                    "word": word_text,
+                    "start": round(w["start"], 3),
+                    "end": round(w["end"], 3),
+                })
+    return words
 
 
 async def generate_tts_with_timing(text: str, output_path: Path) -> list[dict]:
     """Generate TTS audio and return word boundary timings.
 
+    Uses piper for synthesis (offline) and Whisper for word timing extraction.
     Returns list of {word, start, end} in seconds.
     """
-    communicate = edge_tts.Communicate(text, TTS_VOICE, boundary="WordBoundary")
+    # Generate WAV
+    wav_path = output_path.with_suffix(".wav")
+    _synthesize_wav(text, wav_path)
 
-    word_boundaries = []
+    # Get word timings from the generated audio
+    word_timings = _get_word_timings(wav_path)
 
-    with open(output_path, "wb") as f:
-        async for event in communicate.stream():
-            if event["type"] == "audio":
-                f.write(event["data"])
-            elif event["type"] == "WordBoundary":
-                offset_s = event["offset"] / 10_000_000
-                duration_s = event["duration"] / 10_000_000
-                word_boundaries.append({
-                    "word": event["text"],
-                    "start": round(offset_s, 3),
-                    "end": round(offset_s + duration_s, 3),
-                })
+    # Convert to MP3
+    _wav_to_mp3(wav_path, output_path)
 
-    # Restore punctuation from source text
-    word_boundaries = _restore_punctuation(text, word_boundaries)
-
-    return word_boundaries
+    return word_timings
 
 
 async def generate_word_tts(word: str) -> Path:
@@ -74,7 +101,8 @@ async def generate_word_tts(word: str) -> Path:
     cache_path = TTS_DIR / f"word_{safe_name}.mp3"
 
     if not cache_path.exists():
-        communicate = edge_tts.Communicate(word, TTS_VOICE)
-        await communicate.save(str(cache_path))
+        wav_path = cache_path.with_suffix(".wav")
+        _synthesize_wav(word, wav_path)
+        _wav_to_mp3(wav_path, cache_path)
 
     return cache_path

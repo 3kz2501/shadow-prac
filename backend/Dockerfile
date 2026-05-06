@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     curl \
     unzip \
+    espeak-ng \
     && rm -rf /var/lib/apt/lists/*
 
 # Install deno (needed by yt-dlp for YouTube JS challenge solving)
@@ -16,7 +17,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p data/audio data/tts data/recordings
+RUN mkdir -p data/audio data/tts data/recordings data/piper
+
+# Download piper voice model
+RUN curl -sL "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx" \
+    -o data/piper/en_US-lessac-medium.onnx && \
+    curl -sL "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json" \
+    -o data/piper/en_US-lessac-medium.onnx.json
 
 EXPOSE 8000
 

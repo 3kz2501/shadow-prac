@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 aiosqlite
 openai-whisper
-edge-tts
+piper-tts
 jiwer
 yt-dlp
 python-multipart
