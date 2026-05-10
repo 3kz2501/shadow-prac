@@ -1,8 +1,6 @@
 # ShadowPrac
 
-[日本語版 README](README.ja.md)
-
-English shadowing practice app. Import audio from YouTube or local files, get automatic transcription and chunking, then practice with karaoke-style playback, recording, and pronunciation scoring.
+English shadowing practice app. Import audio from YouTube or local files, get automatic transcription and chunking, then practice with karaoke-style playback, recording, and multi-axis pronunciation scoring.
 
 > **Disclaimer**: This tool is for personal educational use only. Users are responsible for complying with the terms of service of any content platform they use with this tool.
 
@@ -11,17 +9,27 @@ English shadowing practice app. Import audio from YouTube or local files, get au
 ## Features
 
 - **Import** from YouTube URL or local audio/video files
+- **Optional transcript input**: paste a known transcript (e.g. from InfoQ, TED) for more accurate reference text — Whisper is used only for word-level timestamp alignment
+- **Transcript cleaning**: automatically strips speaker labels, timestamps, section headers, and stage directions from pasted transcripts
 - **Auto transcription** via OpenAI Whisper (word-level timestamps)
-- **Smart chunking** into ~30-90 second segments at natural boundaries
-- **Karaoke playback** with word-by-word highlighting synced to audio
-- **Synth / Original** voice toggle (piper TTS, fully offline, or source audio)
-- **Playback controls**: restart, sentence/word skip, speed adjustment (0.5x-2.0x)
-- **Shadowing practice**: record yourself, get WER-based pronunciation score
-- **Score history**: track your progress per chunk
+- **Smart chunking** into ~15-45 second segments at natural pause boundaries
+- **Karaoke playback** with word-by-word color highlighting synced to audio
+- **Word click to seek**: click any word in the script to jump to that position
+- **Synth / Original** voice toggle (piper TTS British English, fully offline, or source audio)
+- **Playback controls**: restart, sentence/word skip, speed (0.05x step), volume (0-200% boost via Web Audio API GainNode)
+- **Controls lock during recording**: all player controls are disabled while recording to prevent accidental interference
+- **Shadowing practice**: record yourself, get multi-axis scoring
+- **Multi-axis scoring**:
+  - **Accuracy (WER)**: word error rate comparing your speech to reference text
+  - **Timing (Prosody)**: how well your word timing follows the reference audio
+  - Reference automatically switches based on voice mode (TTS timing for Synth, original audio timing for Original)
+- **Attempt tracking**: each practice attempt is numbered and stored with full scoring details
+- **Score history**: review past attempts with attempt number, accuracy %, and timing %
 - **Vocabulary list**: extracted content words with CEFR difficulty levels (A1-C1+), frequency sorting, and individual word TTS playback
 - **Script toggle**: show/hide karaoke subtitles and full text
 - **Word alignment**: color-coded diff after scoring (correct / substituted / deleted / inserted)
-- **Japanese dictionary**: hover any word for Japanese translation (EJDict-hand, ~45k words)
+- **Dictionary with IPA**: hover any word for IPA pronunciation and Japanese translation (EJDict-hand, ~45k words)
+- **Stemming support**: inflected forms (running, services, deployed) automatically resolve to base form for dictionary lookup
 - **Audio cleanup**: background noise reduction and silence compression on import
 - **Time range import**: specify start/end times for YouTube URLs or local files
 
@@ -87,6 +95,7 @@ Open http://localhost:5173 and click **+ Import**.
 
 - **YouTube**: Paste a URL and click Import. The app downloads audio, transcribes it with Whisper, splits into chunks, and generates TTS audio. This takes a few minutes depending on the video length.
 - **Local file**: Upload an audio or video file (m4a, mp3, wav, mp4, etc.).
+- **Transcript** (optional): Paste a transcript into the text area if you have one (e.g. from a talk page, subtitles, show notes). Speaker labels, timestamps, and section headers are automatically cleaned. When provided, Whisper is used only for word-level timing alignment — the pasted text becomes the authoritative reference for display and scoring.
 
 Progress is shown while processing.
 
@@ -103,19 +112,30 @@ Click any chunk to open the practice page.
 - **Restart**: jump to beginning of chunk
 - **Sentence / Word skip**: navigate forward or backward by sentence or word
 
-**Settings (second row)**:
-- **Voice**: switch between **Synth** (clear TTS pronunciation) and **Original** (source audio)
-- **Speed**: adjust playback speed from 0.5x to 2.0x
+**Voice toggle**:
+- **Synth**: clear British English TTS pronunciation (piper, en_GB-cori-high)
+- **Original**: source audio at original speed
+- Switching voice resets speed and volume to defaults
 
-**Script**: click "Show Script" to reveal karaoke subtitles. Hidden by default — shadowing is more effective when you listen rather than read.
+**Speed & Volume** (stacked sliders):
+- **Speed**: 0-2.0x in 0.05 steps, with +/- buttons
+- **Volume**: 0-200% with boost support (via Web Audio API GainNode), with +/- buttons
+
+**Script**: click "Show Script" to reveal karaoke subtitles. Words are color-highlighted as they are spoken. **Click any word** to jump playback to that position. **Hover** any word to see IPA pronunciation and Japanese definition.
 
 **Recording** (headphones recommended for best accuracy):
-1. Click **Record** — playback starts from the beginning automatically
+1. Click **Record** — playback starts from the beginning automatically. All player controls are locked during recording.
 2. Shadow along with the audio
 3. Click **Stop & Score** — your recording is transcribed and compared against the reference text
-4. View your score (percentage), word-level breakdown (correct / substituted / deleted / inserted), and your transcript vs the reference
+4. View your scores:
+   - **Accuracy** circle: WER-based percentage (how many words you got right)
+   - **Timing** circle: prosody score (how closely your word timing followed the reference)
+   - Word-level breakdown: correct / substituted / deleted / inserted
+   - Average timing offset in seconds
 
-Score history is saved per chunk. Use the **History** dropdown to review past attempts.
+The prosody reference automatically matches your voice mode — if you practiced with Synth, timing is compared against TTS; if you used Original, it's compared against the source audio.
+
+Attempts are numbered and saved per chunk. Use the **History** dropdown to review past attempts (shows attempt number, accuracy %, and timing %).
 
 ### 4. Vocabulary
 
@@ -126,7 +146,8 @@ On the session detail page, switch to the **Vocabulary** tab.
 - **Sort** by difficulty, frequency, or alphabetical order
 - **Filter** by level (click level buttons) or search by text
 - **Click any word** to hear its pronunciation
-- **Hover any word** to see its Japanese translation (powered by [EJDict-hand](https://github.com/kujirahand/EJDict), ~45k words, Public Domain)
+- **Hover any word** to see its IPA pronunciation and Japanese translation (powered by [EJDict-hand](https://github.com/kujirahand/EJDict), ~45k words, Public Domain)
+- Inflected forms (plurals, past tense, -ing, etc.) are automatically resolved to base forms for dictionary lookup
 
 The same word tooltip also works on the karaoke script view.
 
@@ -137,9 +158,9 @@ Edit `backend/config.py`:
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `WHISPER_ENGINE` | `openai-whisper` | `openai-whisper` or `faster-whisper` |
-| `WHISPER_MODEL` | `base` | Whisper model size: tiny/base/small/medium/large |
-| `WHISPER_SCORING_MODEL` | `base` | Model used for scoring recordings |
-| `TTS_PIPER_MODEL` | `en_US-lessac-medium` | Piper voice model name |
+| `WHISPER_MODEL` | `small.en` | Whisper model size: tiny/base/small/medium/large (.en for English-only) |
+| `WHISPER_SCORING_MODEL` | `small.en` | Model used for scoring recordings |
+| `TTS_PIPER_MODEL` | `en_GB-cori-high` | Piper voice model name |
 | `PORT` | `8000` | Backend server port |
 
 ## Project structure
@@ -149,7 +170,7 @@ shadow-prac/
 ├── backend/
 │   ├── main.py              # FastAPI app
 │   ├── config.py            # Settings
-│   ├── db.py                # SQLite setup
+│   ├── db.py                # SQLite setup (sessions, chunks, attempts, scores)
 │   ├── models.py            # Pydantic schemas
 │   ├── requirements.txt
 │   ├── regen_tts.py         # Utility: regenerate TTS with word timings
@@ -157,17 +178,19 @@ shadow-prac/
 │   │   ├── import_router.py # Import endpoint + processing pipeline
 │   │   ├── sessions.py      # Session CRUD
 │   │   ├── chunks.py        # Chunk data + audio serving
-│   │   ├── scoring.py       # Recording upload + WER scoring
+│   │   ├── scoring.py       # Recording upload + WER + prosody scoring
 │   │   ├── vocab.py         # Vocabulary extraction
+│   │   ├── dictionary.py    # Dictionary + IPA lookup
 │   │   └── tts.py           # Single word TTS
 │   ├── services/
 │   │   ├── downloader.py    # yt-dlp + ffmpeg
-│   │   ├── transcriber.py   # Whisper abstraction
-│   │   ├── text_processing.py # Filler removal, chunking
-│   │   ├── tts_service.py   # edge-tts with word timings
+│   │   ├── transcriber.py   # Whisper transcription + forced alignment
+│   │   ├── text_processing.py # Filler removal, chunking, transcript cleaning
+│   │   ├── tts_service.py   # piper TTS with word timings
 │   │   ├── scorer.py        # WER scoring via jiwer
+│   │   ├── prosody.py       # Prosody/timing score calculation
 │   │   ├── word_level.py    # CEFR level estimation via wordfreq
-│   │   └── dictionary.py   # EJDict-hand lookup
+│   │   └── dictionary.py    # EJDict-hand lookup + IPA + stemming
 │   ├── dict/
 │   │   └── ejdict.txt       # EN-JA dictionary (Public Domain, bundled)
 │   └── data/                # Runtime data (gitignored)
@@ -180,11 +203,12 @@ shadow-prac/
 │   │   ├── components/      # KaraokePlayer, WordDisplay, Recorder, ScoreDisplay, VocabList, ChunkSelector
 │   │   └── hooks/           # useAudioPlayer, useRecorder
 │   └── ...
+├── docker-compose.yml
 └── README.md
 ```
 
 ## Tech stack
 
-- **Backend**: Python, FastAPI, SQLite, OpenAI Whisper, piper-tts, jiwer, yt-dlp, wordfreq
+- **Backend**: Python, FastAPI, SQLite, OpenAI Whisper, piper-tts, jiwer, yt-dlp, wordfreq, eng-to-ipa
 - **Frontend**: React, TypeScript, Vite
-- **Audio**: Web Audio API (browser), ffmpeg (server)
+- **Audio**: Web Audio API (browser recording + GainNode volume boost), ffmpeg (server-side processing)
