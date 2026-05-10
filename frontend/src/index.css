@@ -350,13 +350,13 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
 }
 
 .word {
-  transition: all 0.15s;
+  transition: color 0.15s, background 0.15s;
   padding: 2px 1px;
   border-radius: 3px;
 }
 
 .word.upcoming { color: var(--muted); }
-.word.current { color: var(--text-h); background: rgba(99, 102, 241, 0.2); font-weight: 600; }
+.word.current { color: var(--text-h); background: rgba(99, 102, 241, 0.2); }
 .word.past { color: var(--primary); }
 
 /* Practice section */
