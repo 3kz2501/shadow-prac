@@ -68,6 +68,23 @@ class ScoreResult(BaseModel):
     alignment: list[AlignmentItem] | None = None
 
 
+class AttemptResult(BaseModel):
+    id: str
+    chunk_id: str
+    attempt_number: int
+    wer: float
+    score_pct: int
+    prosody_score: int
+    mean_offset: float
+    transcript: str
+    hits: int
+    insertions: int
+    deletions: int
+    substitutions: int
+    created_at: str | None = None
+    alignment: list[AlignmentItem] | None = None
+
+
 class VocabWord(BaseModel):
     word: str
     frequency: int

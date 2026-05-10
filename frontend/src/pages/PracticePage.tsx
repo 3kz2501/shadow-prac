@@ -13,6 +13,7 @@ export function PracticePage() {
   const [currentChunk, setCurrentChunk] = useState<ChunkDetail | null>(null);
   const [chunkIdx, setChunkIdx] = useState(parseInt(searchParams.get("chunk") || "0"));
   const playerRef = useRef<KaraokePlayerHandle>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
 
   useEffect(() => {
@@ -33,10 +34,12 @@ export function PracticePage() {
   };
 
   const handleRecordStart = () => {
+    setIsRecording(true);
     playerRef.current?.restartAndPlay();
   };
 
   const handleRecordStop = () => {
+    setIsRecording(false);
     playerRef.current?.pause();
   };
 
@@ -52,13 +55,14 @@ export function PracticePage() {
 
       {currentChunk ? (
         <>
-          <KaraokePlayer ref={playerRef} chunk={currentChunk} />
+          <KaraokePlayer ref={playerRef} chunk={currentChunk} disabled={isRecording} />
 
           <div className="practice-section">
             <h3>Shadowing Practice</h3>
             <p className="text-muted">Record starts playback from the beginning. Shadow along!</p>
             <Recorder
               chunkId={currentChunk.id}
+              audioMode={playerRef.current?.isTtsMode() ? "tts" : "original"}
               onRecordStart={handleRecordStart}
               onRecordStop={handleRecordStop}
             />

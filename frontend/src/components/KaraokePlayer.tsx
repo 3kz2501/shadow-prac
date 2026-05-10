@@ -7,10 +7,12 @@ import { WordDisplay } from "./WordDisplay";
 export interface KaraokePlayerHandle {
   restartAndPlay: () => void;
   pause: () => void;
+  isTtsMode: () => boolean;
 }
 
 interface Props {
   chunk: ChunkDetail;
+  disabled?: boolean;
 }
 
 function getSentenceBoundaries(words: WordTiming[]): number[] {
@@ -24,7 +26,7 @@ function getSentenceBoundaries(words: WordTiming[]): number[] {
   return boundaries;
 }
 
-export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, ref) => {
+export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, disabled = false }, ref) => {
   const [useTts, setUseTts] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [showScript, setShowScript] = useState(true);
@@ -52,6 +54,8 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, 
   useEffect(() => {
     const src = useTts ? chunkTtsUrl(chunk.id) : chunkAudioUrl(chunk.id);
     player.load(src);
+    player.changeRate(1.0);
+    player.changeVolume(1.0);
     setCurrentTime(0);
   }, [chunk.id, useTts]);
 
@@ -72,6 +76,7 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, 
   useImperativeHandle(ref, () => ({
     restartAndPlay,
     pause: player.pause,
+    isTtsMode: () => useTts,
   }));
 
   const jumpSentence = (direction: -1 | 1) => {
@@ -102,46 +107,67 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk }, 
 
   return (
     <div className="karaoke-player">
-      <div className="controls-row">
-        <button onClick={player.isPlaying ? player.pause : player.play} className="btn btn-primary btn-play">
+      <div className={`controls-row ${disabled ? "controls-disabled" : ""}`}>
+        <button onClick={player.isPlaying ? player.pause : player.play} className="btn btn-primary btn-play" disabled={disabled}>
           {player.isPlaying ? "Pause" : "Play"}
         </button>
         <span className="nav-separator" />
-        <button onClick={restart} className="btn btn-sm btn-nav">Restart</button>
+        <button onClick={restart} className="btn btn-sm btn-nav" disabled={disabled}>Restart</button>
         <span className="nav-divider" />
-        <button onClick={() => jumpSentence(-1)} className="btn btn-sm btn-nav">&laquo; Sentence</button>
-        <button onClick={() => jumpWord(-1)} className="btn btn-sm btn-nav">&lsaquo; Word</button>
-        <button onClick={() => jumpWord(1)} className="btn btn-sm btn-nav">Word &rsaquo;</button>
-        <button onClick={() => jumpSentence(1)} className="btn btn-sm btn-nav">Sentence &raquo;</button>
+        <button onClick={() => jumpSentence(-1)} className="btn btn-sm btn-nav" disabled={disabled}>&laquo; Sentence</button>
+        <button onClick={() => jumpWord(-1)} className="btn btn-sm btn-nav" disabled={disabled}>&lsaquo; Word</button>
+        <button onClick={() => jumpWord(1)} className="btn btn-sm btn-nav" disabled={disabled}>Word &rsaquo;</button>
+        <button onClick={() => jumpSentence(1)} className="btn btn-sm btn-nav" disabled={disabled}>Sentence &raquo;</button>
       </div>
 
-      <div className="controls-row controls-secondary">
+      <div className={`controls-row controls-secondary ${disabled ? "controls-disabled" : ""}`}>
         <span className="control-label">Voice:</span>
         <div className="audio-toggle">
           <button
             className={`btn btn-sm ${useTts ? "btn-active" : ""}`}
             onClick={() => setUseTts(true)}
+            disabled={disabled}
           >
             Synth
           </button>
           <button
             className={`btn btn-sm ${!useTts ? "btn-active" : ""}`}
             onClick={() => setUseTts(false)}
+            disabled={disabled}
           >
             Original
           </button>
         </div>
+      </div>
 
-        <div className="speed-control">
-          <label>Speed: {player.playbackRate.toFixed(1)}x</label>
+      <div className={`slider-controls ${disabled ? "controls-disabled" : ""}`}>
+        <div className="slider-row">
+          <label>Speed: {player.playbackRate.toFixed(2)}x</label>
+          <button className="btn btn-sm adj-btn" disabled={disabled} onClick={() => player.changeRate(Math.max(0.1, +(player.playbackRate - 0.05).toFixed(2)))}>-</button>
           <input
             type="range"
-            min="0.5"
+            min="0"
+            max="2.0"
+            step="0.05"
+            value={player.playbackRate}
+            onChange={(e) => player.changeRate(Math.max(0.1, parseFloat(e.target.value)))}
+            disabled={disabled}
+          />
+          <button className="btn btn-sm adj-btn" disabled={disabled} onClick={() => player.changeRate(Math.min(2.0, +(player.playbackRate + 0.05).toFixed(2)))}>+</button>
+        </div>
+        <div className="slider-row">
+          <label>Vol: {Math.round(player.volume * 100)}%</label>
+          <button className="btn btn-sm adj-btn" disabled={disabled} onClick={() => player.changeVolume(Math.max(0, +(player.volume - 0.1).toFixed(1)))}>-</button>
+          <input
+            type="range"
+            min="0"
             max="2.0"
             step="0.1"
-            value={player.playbackRate}
-            onChange={(e) => player.changeRate(parseFloat(e.target.value))}
+            value={player.volume}
+            onChange={(e) => player.changeVolume(parseFloat(e.target.value))}
+            disabled={disabled}
           />
+          <button className="btn btn-sm adj-btn" disabled={disabled} onClick={() => player.changeVolume(Math.min(2.0, +(player.volume + 0.1).toFixed(1)))}>+</button>
         </div>
       </div>
 

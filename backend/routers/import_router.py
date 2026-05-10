@@ -10,7 +10,7 @@ from db import get_db
 from config import TTS_DIR
 from services.downloader import download_youtube, save_uploaded_file
 from services.transcriber import transcribe, align
-from services.text_processing import group_into_chunks, collect_words_from_segments, chunk_text
+from services.text_processing import group_into_chunks, collect_words_from_segments, chunk_text, clean_transcript, map_transcript_to_chunks
 from services.tts_service import generate_tts_with_timing
 
 router = APIRouter()
@@ -50,10 +50,16 @@ async def _run_pipeline(session_id: str, audio_path: str, transcript: str | None
         await _update_session(session_id, status="chunking", progress=50)
         chunks = group_into_chunks(segments_dict)
 
+        # If transcript was provided, map it to chunks for display/scoring text
+        if transcript:
+            chunk_texts = map_transcript_to_chunks(transcript, chunks)
+        else:
+            chunk_texts = [chunk_text(chunk_segs) for chunk_segs in chunks]
+
         db = await get_db()
         for idx, chunk_segs in enumerate(chunks):
             chunk_id = str(uuid.uuid4())
-            text = chunk_text(chunk_segs)
+            text = chunk_texts[idx] if idx < len(chunk_texts) else chunk_text(chunk_segs)
             if len(text) < 20:
                 continue
 
@@ -134,8 +140,8 @@ async def import_content(
     )
     await db.commit()
 
-    # Normalize transcript: strip whitespace, treat empty as None
-    clean_transcript = transcript.strip() if transcript else None
-    background_tasks.add_task(_run_pipeline, session_id, str(audio_path), clean_transcript or None)
+    # Clean and normalize transcript
+    cleaned = clean_transcript(transcript) if transcript else None
+    background_tasks.add_task(_run_pipeline, session_id, str(audio_path), cleaned or None)
 
     return {"session_id": session_id, "title": title, "status": "processing"}

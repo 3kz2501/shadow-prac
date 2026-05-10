@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from "react";
-import { ScoreResult, AlignmentItem } from "../types";
+import { ScoreResult, AttemptResult, AlignmentItem } from "../types";
 import { scoreRecordingUrl } from "../api";
 
 interface Props {
-  score: ScoreResult;
+  score: ScoreResult | AttemptResult;
 }
 
 function AlignmentView({ alignment }: { alignment: AlignmentItem[] }) {
@@ -95,18 +95,32 @@ export function ScoreDisplay({ score }: Props) {
     setPlaying(true);
   };
 
+  const hasProsody = "prosody_score" in score;
+  const prosodyScore = hasProsody ? (score as AttemptResult).prosody_score : null;
+  const meanOffset = hasProsody ? (score as AttemptResult).mean_offset : null;
+
   return (
     <div className="score-display">
       <div className="score-header">
         <div className="score-circle" style={{ borderColor: getScoreColor(score.score_pct) }}>
           <span className="score-pct">{score.score_pct}%</span>
+          <span className="score-label">Accuracy</span>
         </div>
+        {prosodyScore !== null && (
+          <div className="score-circle" style={{ borderColor: getScoreColor(prosodyScore) }}>
+            <span className="score-pct">{prosodyScore}%</span>
+            <span className="score-label">Timing</span>
+          </div>
+        )}
         <div className="score-summary">
           <div className="score-details">
             <span className="score-stat correct">Correct: {score.hits}</span>
             <span className="score-stat sub">Substituted: {score.substitutions}</span>
             <span className="score-stat del">Deleted: {score.deletions}</span>
             <span className="score-stat ins">Inserted: {score.insertions}</span>
+            {meanOffset !== null && (
+              <span className="score-stat timing">Avg offset: {meanOffset}s</span>
+            )}
           </div>
           <button className="btn btn-primary btn-play" onClick={togglePlayback}>
             {playing ? "Stop" : "Play"}

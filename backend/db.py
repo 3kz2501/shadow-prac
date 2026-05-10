@@ -29,6 +29,20 @@ CREATE TABLE IF NOT EXISTS chunks (
     UNIQUE(session_id, chunk_index)
 );
 
+CREATE TABLE IF NOT EXISTS attempts (
+    id              TEXT PRIMARY KEY,
+    chunk_id        TEXT NOT NULL REFERENCES chunks(id) ON DELETE CASCADE,
+    attempt_number  INTEGER NOT NULL,
+    recording_path  TEXT,
+    transcript      TEXT,
+    wer             REAL,
+    wer_details     TEXT,
+    prosody_score   REAL,
+    prosody_details TEXT,
+    created_at      TEXT DEFAULT (datetime('now')),
+    UNIQUE(chunk_id, attempt_number)
+);
+
 CREATE TABLE IF NOT EXISTS scores (
     id              TEXT PRIMARY KEY,
     chunk_id        TEXT NOT NULL REFERENCES chunks(id) ON DELETE CASCADE,

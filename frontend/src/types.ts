@@ -61,6 +61,23 @@ export interface ScoreResult {
   alignment: AlignmentItem[] | null;
 }
 
+export interface AttemptResult {
+  id: string;
+  chunk_id: string;
+  attempt_number: number;
+  wer: number;
+  score_pct: number;
+  prosody_score: number;
+  mean_offset: number;
+  transcript: string;
+  hits: number;
+  insertions: number;
+  deletions: number;
+  substitutions: number;
+  created_at: string | null;
+  alignment: AlignmentItem[] | null;
+}
+
 export interface VocabWord {
   word: string;
   frequency: number;

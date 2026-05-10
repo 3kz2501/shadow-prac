@@ -38,6 +38,12 @@ def score_recording(
     result = transcribe(wav_path, engine=engine or WHISPER_ENGINE, model=model or WHISPER_SCORING_MODEL, language="en")
     hypothesis = result.text.strip()
 
+    # Collect word timestamps from user recording for prosody scoring
+    user_words = []
+    for seg in result.segments:
+        for w in seg.words:
+            user_words.append({"word": w.word, "start": w.start, "end": w.end})
+
     ref_norm = _normalize(reference_text)
     ref_words = ref_norm.split()
 
@@ -51,6 +57,7 @@ def score_recording(
             "deletions": len(ref_words),
             "substitutions": 0,
             "alignment": [{"type": "delete", "ref": w, "hyp": None} for w in ref_words],
+            "user_words": [],
         }
 
     hyp_norm = _normalize(hypothesis)
@@ -86,4 +93,5 @@ def score_recording(
         "deletions": output.deletions,
         "substitutions": output.substitutions,
         "alignment": alignment,
+        "user_words": user_words,
     }

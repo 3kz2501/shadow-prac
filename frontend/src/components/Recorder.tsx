@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useRecorder } from "../hooks/useRecorder";
 import { postForm, fetchJson } from "../api";
-import { ScoreResult } from "../types";
+import { ScoreResult, AttemptResult } from "../types";
 import { ScoreDisplay } from "./ScoreDisplay";
 
 interface Props {
   chunkId: string;
+  audioMode?: "tts" | "original";
   onRecordStart?: () => void;
   onRecordStop?: () => void;
 }
@@ -21,16 +22,18 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export function Recorder({ chunkId, onRecordStart, onRecordStop }: Props) {
+export function Recorder({ chunkId, audioMode = "tts", onRecordStart, onRecordStop }: Props) {
   const { start, stop, isRecording } = useRecorder();
-  const [currentScore, setCurrentScore] = useState<ScoreResult | null>(null);
-  const [history, setHistory] = useState<ScoreResult[]>([]);
+  const [currentScore, setCurrentScore] = useState<ScoreResult | AttemptResult | null>(null);
+  const [history, setHistory] = useState<(ScoreResult | AttemptResult)[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load history when chunk changes
+  // Load history when chunk changes (try attempts first, fallback to scores)
   useEffect(() => {
     setCurrentScore(null);
-    fetchJson<ScoreResult[]>(`/api/chunks/${chunkId}/scores`).then(setHistory);
+    fetchJson<AttemptResult[]>(`/api/chunks/${chunkId}/attempts`)
+      .then((data) => setHistory(data.length ? data : []))
+      .catch(() => fetchJson<ScoreResult[]>(`/api/chunks/${chunkId}/scores`).then(setHistory));
   }, [chunkId]);
 
   const handleToggle = async () => {
@@ -41,7 +44,8 @@ export function Recorder({ chunkId, onRecordStart, onRecordStop }: Props) {
       try {
         const form = new FormData();
         form.append("file", blob, "recording.webm");
-        const result = await postForm<ScoreResult>(`/api/chunks/${chunkId}/score`, form);
+        form.append("audio_mode", audioMode);
+        const result = await postForm<AttemptResult>(`/api/chunks/${chunkId}/score`, form);
         setCurrentScore(result);
         // Prepend to history
         setHistory((prev) => [result, ...prev]);
@@ -84,7 +88,9 @@ export function Recorder({ chunkId, onRecordStart, onRecordStop }: Props) {
             </option>
             {history.map((h) => (
               <option key={h.id} value={h.id}>
+                {"attempt_number" in h ? `#${h.attempt_number} ` : ""}
                 {formatDate(h.created_at)} — {h.score_pct}%
+                {"prosody_score" in h ? ` / ${h.prosody_score}%` : ""}
               </option>
             ))}
           </select>
