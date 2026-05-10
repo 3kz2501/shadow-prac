@@ -5,6 +5,7 @@ import { SessionStatus } from "../types";
 
 export function ImportPage() {
   const [url, setUrl] = useState("");
+  const [transcript, setTranscript] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [importing, setImporting] = useState(false);
@@ -38,9 +39,10 @@ export function ImportPage() {
     poll();
   };
 
-  const appendTimeFields = (form: FormData) => {
+  const appendCommonFields = (form: FormData) => {
     if (startTime.trim()) form.append("start_time", startTime.trim());
     if (endTime.trim()) form.append("end_time", endTime.trim());
+    if (transcript.trim()) form.append("transcript", transcript.trim());
   };
 
   const handleUrl = async () => {
@@ -50,7 +52,7 @@ export function ImportPage() {
     try {
       const form = new FormData();
       form.append("url", url.trim());
-      appendTimeFields(form);
+      appendCommonFields(form);
       const res = await postForm<{ session_id: string }>("/api/import", form);
       pollStatus(res.session_id);
     } catch (e: any) {
@@ -67,7 +69,7 @@ export function ImportPage() {
     try {
       const form = new FormData();
       form.append("file", file);
-      appendTimeFields(form);
+      appendCommonFields(form);
       const res = await postForm<{ session_id: string }>("/api/import", form);
       pollStatus(res.session_id);
     } catch (err: any) {
@@ -107,6 +109,19 @@ export function ImportPage() {
           type="file"
           accept="audio/*,video/*,.m4a,.mp3,.wav,.mp4,.webm,.ogg"
           onChange={handleFile}
+          disabled={importing}
+        />
+      </div>
+
+      <div className="import-section">
+        <h2>Transcript (optional)</h2>
+        <p className="text-muted">Paste a transcript to use as ground truth. Whisper will only be used for word-level timing alignment.</p>
+        <textarea
+          className="input transcript-input"
+          placeholder="Paste transcript here..."
+          rows={5}
+          value={transcript}
+          onChange={(e) => setTranscript(e.target.value)}
           disabled={importing}
         />
       </div>

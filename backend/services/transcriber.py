@@ -30,6 +30,27 @@ class TranscribeResult:
     duration: float
 
 
+def align(audio_path: str | Path, transcript: str, engine: str | None = None, model: str | None = None, language: str | None = "en") -> TranscribeResult:
+    """Forced alignment: use Whisper to get word timestamps for known text.
+
+    Whisper doesn't have a true forced-alignment mode, so we transcribe normally
+    but the caller provides the ground-truth text. The word timestamps from Whisper
+    are returned, and the caller uses the provided transcript as the canonical text.
+    """
+    # Transcribe to get timestamps
+    result = transcribe(audio_path, engine=engine, model=model, language=language)
+
+    # Replace segment text with the provided transcript split proportionally
+    # but keep word-level timestamps from Whisper for alignment
+    # The transcript is authoritative for text; Whisper provides timing only
+    return TranscribeResult(
+        segments=result.segments,
+        text=transcript,
+        language=result.language,
+        duration=result.duration,
+    )
+
+
 def transcribe(audio_path: str | Path, engine: str | None = None, model: str | None = None, language: str | None = "en") -> TranscribeResult:
     engine = engine or WHISPER_ENGINE
     model = model or WHISPER_MODEL

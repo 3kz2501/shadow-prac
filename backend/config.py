@@ -14,11 +14,11 @@ for d in [AUDIO_DIR, TTS_DIR, RECORDINGS_DIR]:
 
 # Whisper
 WHISPER_ENGINE = "openai-whisper"  # or "faster-whisper"
-WHISPER_MODEL = "base"             # tiny/base/small/medium/large
-WHISPER_SCORING_MODEL = "base"     # model used for scoring recordings
+WHISPER_MODEL = "small.en"         # tiny/base/small/medium/large
+WHISPER_SCORING_MODEL = "small.en" # model used for scoring recordings
 
 # TTS (piper)
-TTS_PIPER_MODEL = "en_US-lessac-medium"
+TTS_PIPER_MODEL = "en_GB-cori-high"
 
 # Server
 HOST = "0.0.0.0"

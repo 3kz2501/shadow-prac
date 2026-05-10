@@ -9,7 +9,7 @@ from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Form
 from db import get_db
 from config import TTS_DIR
 from services.downloader import download_youtube, save_uploaded_file
-from services.transcriber import transcribe
+from services.transcriber import transcribe, align
 from services.text_processing import group_into_chunks, collect_words_from_segments, chunk_text
 from services.tts_service import generate_tts_with_timing
 
@@ -24,12 +24,15 @@ async def _update_session(session_id: str, **kwargs):
     await db.commit()
 
 
-async def _run_pipeline(session_id: str, audio_path: str):
+async def _run_pipeline(session_id: str, audio_path: str, transcript: str | None = None):
     """Background task: transcribe → chunk → TTS."""
     try:
-        # Step 1: Transcribe
+        # Step 1: Transcribe (or align if transcript provided)
         await _update_session(session_id, status="transcribing", progress=10)
-        result = transcribe(audio_path)
+        if transcript:
+            result = align(audio_path, transcript)
+        else:
+            result = transcribe(audio_path)
         await _update_session(session_id, duration_s=result.duration, progress=40)
 
         # Convert to dict format for text_processing functions
@@ -100,6 +103,7 @@ async def import_content(
     background_tasks: BackgroundTasks,
     url: str | None = Form(None),
     file: UploadFile | None = File(None),
+    transcript: str | None = Form(None),
     start_time: str | None = Form(None),
     end_time: str | None = Form(None),
 ):
@@ -130,6 +134,8 @@ async def import_content(
     )
     await db.commit()
 
-    background_tasks.add_task(_run_pipeline, session_id, str(audio_path))
+    # Normalize transcript: strip whitespace, treat empty as None
+    clean_transcript = transcript.strip() if transcript else None
+    background_tasks.add_task(_run_pipeline, session_id, str(audio_path), clean_transcript or None)
 
     return {"session_id": session_id, "title": title, "status": "processing"}
