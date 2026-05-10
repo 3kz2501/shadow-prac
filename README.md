@@ -28,10 +28,15 @@ English shadowing practice app. Import audio from YouTube or local files, get au
 - **Vocabulary list**: extracted content words with CEFR difficulty levels (A1-C1+), frequency sorting, and individual word TTS playback
 - **Script toggle**: show/hide karaoke subtitles and full text
 - **Word alignment**: color-coded diff after scoring (correct / substituted / deleted / inserted)
+- **Word annotations** (double-click any word in the script):
+  - **? Unclear**: mark words you can't hear clearly (red wavy underline)
+  - **! Stress**: mark stressed words (bold highlight)
+  - **/ Break**: mark meaning-group boundaries (yellow `/` divider) — playback auto-stops at each `/`, press Play to continue to the next segment
 - **Dictionary with IPA**: hover any word for IPA pronunciation and Japanese translation (EJDict-hand, ~45k words)
 - **Stemming support**: inflected forms (running, services, deployed) automatically resolve to base form for dictionary lookup
 - **Audio cleanup**: background noise reduction and silence compression on import
 - **Time range import**: specify start/end times for YouTube URLs or local files
+- **Responsive UI**: mobile-friendly layout for practice on phone browsers
 
 ## Prerequisites
 
@@ -121,7 +126,12 @@ Click any chunk to open the practice page.
 - **Speed**: 0-2.0x in 0.05 steps, with +/- buttons
 - **Volume**: 0-200% with boost support (via Web Audio API GainNode), with +/- buttons
 
-**Script**: click "Show Script" to reveal karaoke subtitles. Words are color-highlighted as they are spoken. **Click any word** to jump playback to that position. **Hover** any word to see IPA pronunciation and Japanese definition.
+**Script**: click "Show Script" to reveal karaoke subtitles. Words are color-highlighted as they are spoken. **Click any word** to jump playback to that position. **Hover** any word to see IPA pronunciation and Japanese definition. **Double-click** any word to open the annotation menu.
+
+**Word annotations** (double-click any word):
+- **? Unclear**: mark words you can't hear clearly — red wavy underline
+- **! Stress**: mark stressed words — bold highlight
+- **/ Break**: mark meaning-group boundaries — yellow `/` appears after the word. When break marks are present, playback **auto-stops at each `/`**. Press Play to advance to the next segment. This enables phrase-by-phrase listening practice.
 
 **Recording** (headphones recommended for best accuracy):
 1. Click **Record** — playback starts from the beginning automatically. All player controls are locked during recording.
@@ -170,7 +180,7 @@ shadow-prac/
 ├── backend/
 │   ├── main.py              # FastAPI app
 │   ├── config.py            # Settings
-│   ├── db.py                # SQLite setup (sessions, chunks, attempts, scores)
+│   ├── db.py                # SQLite setup (sessions, chunks, attempts, scores, annotations)
 │   ├── models.py            # Pydantic schemas
 │   ├── requirements.txt
 │   ├── regen_tts.py         # Utility: regenerate TTS with word timings
@@ -181,6 +191,7 @@ shadow-prac/
 │   │   ├── scoring.py       # Recording upload + WER + prosody scoring
 │   │   ├── vocab.py         # Vocabulary extraction
 │   │   ├── dictionary.py    # Dictionary + IPA lookup
+│   │   ├── annotations.py   # Word annotation CRUD (unclear/stress/break)
 │   │   └── tts.py           # Single word TTS
 │   ├── services/
 │   │   ├── downloader.py    # yt-dlp + ffmpeg

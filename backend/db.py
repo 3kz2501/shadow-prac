@@ -43,6 +43,15 @@ CREATE TABLE IF NOT EXISTS attempts (
     UNIQUE(chunk_id, attempt_number)
 );
 
+CREATE TABLE IF NOT EXISTS annotations (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    chunk_id        TEXT NOT NULL REFERENCES chunks(id) ON DELETE CASCADE,
+    word_index      INTEGER NOT NULL,
+    mark_type       TEXT NOT NULL,
+    created_at      TEXT DEFAULT (datetime('now')),
+    UNIQUE(chunk_id, word_index, mark_type)
+);
+
 CREATE TABLE IF NOT EXISTS scores (
     id              TEXT PRIMARY KEY,
     chunk_id        TEXT NOT NULL REFERENCES chunks(id) ON DELETE CASCADE,

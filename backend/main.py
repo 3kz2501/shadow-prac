@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from config import HOST, PORT, DATA_DIR
 from db import init_db, close_db
-from routers import import_router, sessions, chunks, scoring, vocab, tts, dictionary
+from routers import import_router, sessions, chunks, scoring, vocab, tts, dictionary, annotations
 
 
 @asynccontextmanager
@@ -39,6 +39,7 @@ app.include_router(scoring.router)
 app.include_router(vocab.router)
 app.include_router(tts.router)
 app.include_router(dictionary.router)
+app.include_router(annotations.router)
 
 
 @app.get("/api/health")

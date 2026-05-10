@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo, useImperativeHandle, forwardRef } from "react";
-import { ChunkDetail, WordTiming } from "../types";
-import { chunkTtsUrl, chunkAudioUrl } from "../api";
+import { useEffect, useState, useMemo, useImperativeHandle, forwardRef, useRef, useCallback } from "react";
+import { ChunkDetail, WordTiming, Annotations, MarkType } from "../types";
+import { chunkTtsUrl, chunkAudioUrl, fetchJson, postJson } from "../api";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { WordDisplay } from "./WordDisplay";
 
@@ -30,6 +30,8 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
   const [useTts, setUseTts] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [showScript, setShowScript] = useState(true);
+  const [annotations, setAnnotations] = useState<Annotations>({} as Annotations);
+  const annotationsRef = useRef(annotations);
 
   const player = useAudioPlayer({
     onTimeUpdate: setCurrentTime,
@@ -51,26 +53,97 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
     return result;
   }, [words, currentTime]);
 
+  // Keep ref in sync for use in time-check callback
+  useEffect(() => { annotationsRef.current = annotations; }, [annotations]);
+
+  // Break boundary auto-stop: check if we crossed a break mark
+  const prevWordRef = useRef(-1);
+  useEffect(() => {
+    if (!player.isPlaying) return;
+    const breaks = annotationsRef.current.break || [];
+    if (breaks.length === 0) return;
+
+    const prev = prevWordRef.current;
+    const cur = currentWordIndex;
+
+    if (cur > prev) {
+      // Check if any break mark is between prev and cur (inclusive of prev, break is "after" that word)
+      for (let i = prev; i < cur; i++) {
+        if (breaks.includes(i)) {
+          // Stop at the start of the next word after the break
+          const stopTime = words[i + 1]?.start;
+          if (stopTime !== undefined) {
+            player.pause();
+            player.seek(stopTime);
+            setCurrentTime(stopTime);
+          }
+          break;
+        }
+      }
+    }
+    prevWordRef.current = cur;
+  }, [currentWordIndex, player.isPlaying, words]);
+
+  // Load annotations
+  useEffect(() => {
+    fetchJson<Annotations>(`/api/chunks/${chunk.id}/annotations`)
+      .then(setAnnotations)
+      .catch(() => setAnnotations({} as Annotations));
+  }, [chunk.id]);
+
   useEffect(() => {
     const src = useTts ? chunkTtsUrl(chunk.id) : chunkAudioUrl(chunk.id);
     player.load(src);
     player.changeRate(1.0);
     player.changeVolume(1.0);
     setCurrentTime(0);
+    prevWordRef.current = -1;
   }, [chunk.id, useTts]);
+
+  const handleAnnotate = useCallback(async (wordIndex: number, markType: MarkType) => {
+    try {
+      const res = await postJson<{ action: string }>(`/api/chunks/${chunk.id}/annotations`, {
+        word_index: wordIndex,
+        mark_type: markType,
+      });
+      // Update local state
+      setAnnotations((prev) => {
+        const list = prev[markType] ? [...prev[markType]] : [];
+        if (res.action === "added") {
+          list.push(wordIndex);
+        } else {
+          const idx = list.indexOf(wordIndex);
+          if (idx >= 0) list.splice(idx, 1);
+        }
+        return { ...prev, [markType]: list };
+      });
+    } catch (e) {
+      console.error("Failed to toggle annotation:", e);
+    }
+  }, [chunk.id]);
 
   const restart = () => {
     const t = useTts ? 0 : chunk.start_time;
     player.seek(t);
     setCurrentTime(t);
+    prevWordRef.current = -1;
   };
 
   const restartAndPlay = () => {
     const t = useTts ? 0 : chunk.start_time;
     player.seek(t);
     setCurrentTime(t);
-    // Small delay to let seek settle before playing
+    prevWordRef.current = -1;
     setTimeout(() => player.play(), 50);
+  };
+
+  // Play with break awareness: seek to current segment start first
+  const playFromSegment = () => {
+    const breaks = annotations.break || [];
+    if (breaks.length === 0 || !player.isPlaying) {
+      player.play();
+      return;
+    }
   };
 
   useImperativeHandle(ref, () => ({
@@ -103,6 +176,15 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
     const targetTime = words[targetIdx].start;
     player.seek(targetTime);
     setCurrentTime(targetTime);
+  };
+
+  const handleWordClick = (t: number) => {
+    player.seek(t);
+    setCurrentTime(t);
+    // Reset prev word so break detection works from new position
+    for (let i = 0; i < words.length; i++) {
+      if (words[i].start >= t) { prevWordRef.current = i - 1; break; }
+    }
   };
 
   return (
@@ -180,7 +262,13 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
       </button>
 
       {showScript && (
-        <WordDisplay words={words} currentTime={currentTime} onWordClick={(t) => { player.seek(t); setCurrentTime(t); }} />
+        <WordDisplay
+          words={words}
+          currentTime={currentTime}
+          annotations={annotations}
+          onWordClick={handleWordClick}
+          onAnnotate={disabled ? undefined : handleAnnotate}
+        />
       )}
     </div>
   );

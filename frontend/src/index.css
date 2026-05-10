@@ -355,9 +355,47 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
   border-radius: 3px;
 }
 
+.word-wrapper { position: relative; display: inline; }
+
 .word.upcoming { color: var(--muted); }
 .word.current { color: var(--text-h); background: rgba(99, 102, 241, 0.2); }
 .word.past { color: var(--primary); }
+
+/* Annotation marks */
+.word.mark-unclear { text-decoration: underline wavy var(--danger); text-underline-offset: 3px; }
+.word.mark-stress { font-weight: 700; color: var(--text-h) !important; }
+.mark-break { color: var(--warning); font-weight: 700; margin: 0 2px; user-select: none; }
+
+/* Annotation popup menu */
+.annotation-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  z-index: 200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  white-space: nowrap;
+}
+.annotation-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.annotation-btn:hover { background: rgba(255,255,255,0.08); }
+.annotation-active { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+.annotation-icon { font-weight: 700; font-size: 14px; }
 
 /* Practice section */
 .practice-section {
@@ -642,4 +680,81 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
   transform: translateX(-50%);
   border: 5px solid transparent;
   border-top-color: #1a1b23;
+}
+
+/* ===== Responsive (mobile) ===== */
+@media (max-width: 640px) {
+  main { padding: 12px; }
+  .app-header { padding: 10px 12px; }
+
+  h1 { font-size: 22px; }
+  h2 { font-size: 17px; }
+  h3 { font-size: 15px; }
+
+  /* Import page */
+  .import-page { max-width: 100%; }
+  .input-row { flex-direction: column; }
+  .time-range-row { flex-direction: column; gap: 8px; }
+
+  /* Karaoke player */
+  .karaoke-player { padding: 12px; }
+
+  .controls-row { gap: 2px; }
+  .btn-play { padding: 8px 20px; font-size: 14px; }
+  .btn-nav { padding: 4px 5px; font-size: 12px; }
+  .nav-separator { width: 4px; }
+
+  .controls-secondary { gap: 8px; flex-wrap: wrap; }
+
+  .slider-row label { min-width: 80px; font-size: 12px; }
+  .slider-row input[type="range"] { min-width: 80px; }
+  .adj-btn { min-width: 24px; padding: 2px 4px; font-size: 12px; }
+
+  /* Word display */
+  .word-display { font-size: 18px; line-height: 1.7; }
+
+  /* Chunk selector */
+  .chunk-selector { gap: 6px; }
+  .chunk-select { min-width: 0; font-size: 12px; }
+  .chunk-info { font-size: 12px; }
+
+  /* Score display */
+  .score-header { flex-wrap: wrap; gap: 10px; }
+  .score-circle { width: 56px; height: 56px; }
+  .score-pct { font-size: 20px; }
+  .score-summary { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .score-details { gap: 8px; font-size: 12px; }
+
+  /* Recorder */
+  .recorder-controls { gap: 8px; }
+  .history-select { min-width: 0; flex: 1; font-size: 12px; }
+
+  /* Alignment */
+  .alignment-words { font-size: 13px; gap: 3px 4px; }
+  .alignment-legend { gap: 8px; font-size: 11px; flex-wrap: wrap; }
+
+  /* Vocabulary */
+  .vocab-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  .vocab-controls { gap: 6px; }
+
+  /* Tooltip & annotation menu - left-aligned on mobile to prevent overflow */
+  .word-tooltip, .annotation-menu {
+    left: 0;
+    transform: none;
+    min-width: 200px;
+    max-width: calc(100vw - 32px);
+  }
+  .word-tooltip::after {
+    left: 16px;
+    transform: none;
+  }
+
+  /* Session cards */
+  .session-card { padding: 12px; gap: 8px; }
+  .session-meta { gap: 8px; font-size: 12px; flex-wrap: wrap; }
+
+  /* Practice section */
+  .practice-section { padding: 12px; }
+  .chunk-text-section { padding: 12px; }
+  .chunk-full-text { font-size: 14px; }
 }

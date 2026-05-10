@@ -78,6 +78,9 @@ export interface AttemptResult {
   alignment: AlignmentItem[] | null;
 }
 
+export type MarkType = "unclear" | "stress" | "break";
+export type Annotations = Record<MarkType, number[]>;
+
 export interface VocabWord {
   word: string;
   frequency: number;
