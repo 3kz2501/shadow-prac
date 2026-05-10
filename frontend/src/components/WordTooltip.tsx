@@ -6,10 +6,15 @@ interface Props {
   children: React.ReactNode;
 }
 
-const cache = new Map<string, string | null>();
+interface DictEntry {
+  definition: string | null;
+  ipa: string | null;
+}
+
+const cache = new Map<string, DictEntry>();
 
 export function WordTooltip({ word, children }: Props) {
-  const [definition, setDefinition] = useState<string | null | undefined>(undefined);
+  const [entry, setEntry] = useState<DictEntry | undefined>(undefined);
   const [visible, setVisible] = useState(false);
   const timeoutRef = useRef<number>(0);
 
@@ -18,19 +23,21 @@ export function WordTooltip({ word, children }: Props) {
     if (!key) return;
 
     if (cache.has(key)) {
-      setDefinition(cache.get(key)!);
+      setEntry(cache.get(key)!);
       setVisible(true);
       return;
     }
 
     try {
-      const res = await fetchJson<{ word: string; definition: string | null }>(`/api/dict/${key}`);
-      cache.set(key, res.definition);
-      setDefinition(res.definition);
+      const res = await fetchJson<{ word: string; definition: string | null; ipa: string | null }>(`/api/dict/${key}`);
+      const e = { definition: res.definition, ipa: res.ipa };
+      cache.set(key, e);
+      setEntry(e);
       setVisible(true);
     } catch {
-      cache.set(key, null);
-      setDefinition(null);
+      const e = { definition: null, ipa: null };
+      cache.set(key, e);
+      setEntry(e);
     }
   };
 
@@ -50,9 +57,10 @@ export function WordTooltip({ word, children }: Props) {
       onMouseLeave={handleMouseLeave}
     >
       {children}
-      {visible && definition !== undefined && (
-        <span className={`word-tooltip ${definition === null ? "word-tooltip-empty" : ""}`}>
-          {definition || "辞書に情報がありません"}
+      {visible && entry !== undefined && (
+        <span className={`word-tooltip ${!entry.definition && !entry.ipa ? "word-tooltip-empty" : ""}`}>
+          {entry.ipa && <span className="word-ipa">/{entry.ipa}/</span>}
+          {entry.definition || (!entry.ipa && "辞書に情報がありません")}
         </span>
       )}
     </span>

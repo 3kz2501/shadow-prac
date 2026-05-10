@@ -180,7 +180,7 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
       </button>
 
       {showScript && (
-        <WordDisplay words={words} currentTime={currentTime} />
+        <WordDisplay words={words} currentTime={currentTime} onWordClick={(t) => { player.seek(t); setCurrentTime(t); }} />
       )}
     </div>
   );

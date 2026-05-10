@@ -599,7 +599,7 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
 /* Word tooltip */
 .word-tooltip-trigger {
   position: relative;
-  cursor: default;
+  cursor: pointer;
 }
 
 .word-tooltip {
@@ -613,10 +613,9 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
   font-size: 13px;
   line-height: 1.4;
   border-radius: 6px;
-  white-space: nowrap;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  min-width: 250px;
+  max-width: 400px;
   z-index: 100;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
@@ -626,6 +625,13 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
 .word-tooltip-empty {
   font-style: italic;
   color: #9ca3af;
+}
+
+.word-ipa {
+  display: block;
+  color: var(--primary);
+  font-size: 14px;
+  margin-bottom: 2px;
 }
 
 .word-tooltip::after {

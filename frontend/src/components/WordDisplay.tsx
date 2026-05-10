@@ -5,9 +5,10 @@ import { WordTooltip } from "./WordTooltip";
 interface Props {
   words: WordTiming[];
   currentTime: number;
+  onWordClick?: (time: number) => void;
 }
 
-export function WordDisplay({ words, currentTime }: Props) {
+export function WordDisplay({ words, currentTime, onWordClick }: Props) {
   const currentIndex = useMemo(() => {
     let lo = 0;
     let hi = words.length - 1;
@@ -35,7 +36,7 @@ export function WordDisplay({ words, currentTime }: Props) {
 
         return (
           <WordTooltip key={i} word={w.word}>
-            <span className={cls}>
+            <span className={cls} onClick={() => onWordClick?.(w.start)}>
               {w.word}{" "}
             </span>
           </WordTooltip>

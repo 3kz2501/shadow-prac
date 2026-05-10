@@ -7,3 +7,4 @@ jiwer
 yt-dlp
 python-multipart
 wordfreq
+eng-to-ipa
