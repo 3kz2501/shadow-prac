@@ -122,9 +122,9 @@ def is_educational(seg: dict) -> bool:
 
 def group_into_chunks(
     segments: list[dict],
-    target_secs: float = 60.0,
-    min_secs: float = 30.0,
-    max_secs: float = 90.0,
+    target_secs: float = 30.0,
+    min_secs: float = 15.0,
+    max_secs: float = 45.0,
 ) -> list[list[dict]]:
     if not segments:
         return []
