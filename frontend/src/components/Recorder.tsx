@@ -9,6 +9,7 @@ interface Props {
   audioMode?: "tts" | "original";
   segmentText?: string | null; // If set, score only this segment's text
   breaksActive?: boolean;
+  isPlaying?: boolean;
   onRecordStart?: () => void;
   onRecordStop?: () => void;
 }
@@ -24,7 +25,7 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export function Recorder({ chunkId, audioMode = "tts", segmentText, breaksActive = false, onRecordStart, onRecordStop }: Props) {
+export function Recorder({ chunkId, audioMode = "tts", segmentText, breaksActive = false, isPlaying = false, onRecordStart, onRecordStop }: Props) {
   const { start, stop, isRecording } = useRecorder();
   const [currentScore, setCurrentScore] = useState<ScoreResult | AttemptResult | null>(null);
   const [history, setHistory] = useState<(ScoreResult | AttemptResult)[]>([]);
@@ -75,7 +76,7 @@ export function Recorder({ chunkId, audioMode = "tts", segmentText, breaksActive
         <button
           onClick={handleToggle}
           className={`btn ${isRecording ? "btn-recording" : "btn-record"}`}
-          disabled={loading}
+          disabled={loading || (!isRecording && isPlaying)}
         >
           {loading ? "Scoring..." : isRecording ? "Stop & Score" : breaksActive ? "Record /" : "Record"}
         </button>

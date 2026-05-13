@@ -70,6 +70,7 @@ export function PracticePage() {
               audioMode={playerRef.current?.isTtsMode() ? "tts" : "original"}
               segmentText={playerRef.current?.breaksEnabled() ? playerRef.current?.getCurrentSegment()?.text : undefined}
               breaksActive={playerRef.current?.breaksEnabled() ?? false}
+              isPlaying={playerRef.current?.isPlaying() ?? false}
               onRecordStart={handleRecordStart}
               onRecordStop={handleRecordStop}
             />

@@ -17,6 +17,7 @@ export interface KaraokePlayerHandle {
   isTtsMode: () => boolean;
   breaksEnabled: () => boolean;
   getCurrentSegment: () => SegmentInfo | null;
+  isPlaying: () => boolean;
 }
 
 interface Props {
@@ -224,6 +225,7 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
     isTtsMode: () => useTts,
     breaksEnabled: () => breaksActive,
     getCurrentSegment,
+    isPlaying: () => player.isPlaying,
   }));
 
   const jumpSentence = (direction: -1 | 1) => {
