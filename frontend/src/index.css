@@ -304,6 +304,47 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
 }
 .controls-disabled { opacity: 0.4; pointer-events: none; }
 
+/* Split play button (GitHub PR-style) */
+.play-split-btn {
+  position: relative;
+  display: inline-flex;
+}
+.btn-play-split { border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important; }
+.btn-play-menu {
+  padding: 10px 8px !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: 1px solid rgba(255,255,255,0.2) !important;
+  font-size: 12px !important;
+  min-width: 0 !important;
+}
+.play-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  z-index: 200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  white-space: nowrap;
+}
+.play-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: left;
+}
+.play-dropdown-item:hover { background: rgba(255,255,255,0.08); }
+.play-dropdown-item.active { color: var(--primary); font-weight: 600; }
+
 .controls-secondary {
   margin-top: 12px;
   margin-bottom: 8px;

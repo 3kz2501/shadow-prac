@@ -7,6 +7,8 @@ import { ScoreDisplay } from "./ScoreDisplay";
 interface Props {
   chunkId: string;
   audioMode?: "tts" | "original";
+  segmentText?: string | null; // If set, score only this segment's text
+  breaksActive?: boolean;
   onRecordStart?: () => void;
   onRecordStop?: () => void;
 }
@@ -22,7 +24,7 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export function Recorder({ chunkId, audioMode = "tts", onRecordStart, onRecordStop }: Props) {
+export function Recorder({ chunkId, audioMode = "tts", segmentText, breaksActive = false, onRecordStart, onRecordStop }: Props) {
   const { start, stop, isRecording } = useRecorder();
   const [currentScore, setCurrentScore] = useState<ScoreResult | AttemptResult | null>(null);
   const [history, setHistory] = useState<(ScoreResult | AttemptResult)[]>([]);
@@ -45,6 +47,7 @@ export function Recorder({ chunkId, audioMode = "tts", onRecordStart, onRecordSt
         const form = new FormData();
         form.append("file", blob, "recording.webm");
         form.append("audio_mode", audioMode);
+        if (segmentText) form.append("segment_text", segmentText);
         const result = await postForm<AttemptResult>(`/api/chunks/${chunkId}/score`, form);
         setCurrentScore(result);
         // Prepend to history
@@ -74,7 +77,7 @@ export function Recorder({ chunkId, audioMode = "tts", onRecordStart, onRecordSt
           className={`btn ${isRecording ? "btn-recording" : "btn-record"}`}
           disabled={loading}
         >
-          {loading ? "Scoring..." : isRecording ? "Stop & Score" : "Record"}
+          {loading ? "Scoring..." : isRecording ? "Stop & Score" : breaksActive ? "Record /" : "Record"}
         </button>
 
         {history.length > 0 && (

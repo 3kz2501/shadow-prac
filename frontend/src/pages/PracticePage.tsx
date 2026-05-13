@@ -35,7 +35,12 @@ export function PracticePage() {
 
   const handleRecordStart = () => {
     setIsRecording(true);
-    playerRef.current?.restartAndPlay();
+    if (playerRef.current?.breaksEnabled()) {
+      // Break mode: play from current position (already at segment start)
+      playerRef.current?.playFromCurrent();
+    } else {
+      playerRef.current?.restartAndPlay();
+    }
   };
 
   const handleRecordStop = () => {
@@ -63,6 +68,8 @@ export function PracticePage() {
             <Recorder
               chunkId={currentChunk.id}
               audioMode={playerRef.current?.isTtsMode() ? "tts" : "original"}
+              segmentText={playerRef.current?.breaksEnabled() ? playerRef.current?.getCurrentSegment()?.text : undefined}
+              breaksActive={playerRef.current?.breaksEnabled() ?? false}
               onRecordStart={handleRecordStart}
               onRecordStop={handleRecordStop}
             />

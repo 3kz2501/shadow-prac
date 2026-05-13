@@ -92,6 +92,10 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
   const play = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    // Resume AudioContext if suspended (browser autoplay policy)
+    if (audioCtxRef.current?.state === "suspended") {
+      audioCtxRef.current.resume();
+    }
     const { startTime } = optionsRef.current;
     if (startTime && audio.currentTime < startTime) {
       audio.currentTime = startTime;

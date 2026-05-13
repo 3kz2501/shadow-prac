@@ -21,6 +21,7 @@ async def score_chunk(
     chunk_id: str,
     file: UploadFile = File(...),
     audio_mode: str = Form("tts"),
+    segment_text: str | None = Form(None),
 ) -> AttemptResult:
     # Get reference text and word timings
     db = await get_db()
@@ -30,7 +31,9 @@ async def score_chunk(
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(404, "Chunk not found")
-    reference = row["text"]
+
+    # Use segment text if provided (break-segment scoring), otherwise full chunk
+    reference = segment_text.strip() if segment_text else row["text"]
 
     # Choose prosody reference based on which audio the user was shadowing
     if audio_mode == "tts" and row["tts_words_json"]:
