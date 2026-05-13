@@ -116,6 +116,7 @@ Click any chunk to open the practice page.
 
 **Player controls (top row)**:
 - **Play / Pause**: start or stop playback. When break marks exist, a **▾** dropdown appears to switch between **Play with breaks /** (auto-stop at each `/`) and **Play full** (ignore breaks). The selected mode is remembered.
+- **Loop** (repeat icon): toggle loop playback. In Play / mode, loops within the current break segment. In Play mode, loops the entire chunk. Disabled during recording.
 - **Restart**: jump to beginning of chunk
 - **/Break skip**: navigate forward or backward by break boundary (disabled when no breaks are set)
 - **Sentence / Word skip**: navigate forward or backward by sentence or word
@@ -125,11 +126,11 @@ Click any chunk to open the practice page.
 - **Original**: source audio at original speed
 - Switching voice resets speed and volume to defaults
 
-**Speed & Volume** (stacked sliders):
+**Script**: click "Show Script" to reveal karaoke subtitles (positioned directly above the script content). Words are color-highlighted as they are spoken. **Click any word** to jump playback to that position. **Hover** any word to see IPA pronunciation and Japanese definition. **Double-click** any word to open the annotation menu.
+
+**Speed & Volume** (stacked sliders, below script):
 - **Speed**: 0-2.0x in 0.05 steps, with +/- buttons
 - **Volume**: 0-200% with boost support (via Web Audio API GainNode), with +/- buttons
-
-**Script**: click "Show Script" to reveal karaoke subtitles. Words are color-highlighted as they are spoken. **Click any word** to jump playback to that position. **Hover** any word to see IPA pronunciation and Japanese definition. **Double-click** any word to open the annotation menu.
 
 **Word annotations** (double-click any word):
 - **? Unclear**: mark words you can't hear clearly — red wavy underline
