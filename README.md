@@ -16,7 +16,7 @@ English shadowing practice app. Import audio from YouTube or local files, get au
 - **Karaoke playback** with word-by-word color highlighting synced to audio
 - **Word click to seek**: click any word in the script to jump to that position
 - **Synth / Original** voice toggle (piper TTS British English, fully offline, or source audio)
-- **Playback controls**: restart, sentence/word skip, speed (0.05x step), volume (0-200% boost via Web Audio API GainNode)
+- **Playback controls**: restart, sentence/word/break skip, speed (0.05x step), volume (0-200% boost via Web Audio API GainNode)
 - **Controls lock during recording**: all player controls are disabled while recording to prevent accidental interference
 - **Shadowing practice**: record yourself, get multi-axis scoring
 - **Multi-axis scoring**:
@@ -31,7 +31,7 @@ English shadowing practice app. Import audio from YouTube or local files, get au
 - **Word annotations** (double-click any word in the script):
   - **? Unclear**: mark words you can't hear clearly (red wavy underline)
   - **! Stress**: mark stressed words (bold highlight)
-  - **/ Break**: mark meaning-group boundaries (yellow `/` divider) — playback auto-stops at each `/`, press Play to continue to the next segment
+  - **/ Break**: mark meaning-group boundaries (yellow `/` divider) — playback auto-stops at each `/`, press Play to continue to the next segment. Break mode can be toggled on/off via the Play button dropdown (data is preserved when off). Scoring in break mode evaluates only the current segment.
 - **Dictionary with IPA**: hover any word for IPA pronunciation and Japanese translation (EJDict-hand, ~45k words)
 - **Stemming support**: inflected forms (running, services, deployed) automatically resolve to base form for dictionary lookup
 - **Audio cleanup**: background noise reduction and silence compression on import
@@ -113,8 +113,9 @@ The home page lists all imported sessions with status, duration, and chunk count
 Click any chunk to open the practice page.
 
 **Player controls (top row)**:
-- **Play / Pause**: start or stop playback
+- **Play / Pause**: start or stop playback. When break marks exist, a **▾** dropdown appears to switch between **Play with breaks /** (auto-stop at each `/`) and **Play full** (ignore breaks). The selected mode is remembered.
 - **Restart**: jump to beginning of chunk
+- **/Break skip**: navigate forward or backward by break boundary (disabled when no breaks are set)
 - **Sentence / Word skip**: navigate forward or backward by sentence or word
 
 **Voice toggle**:
@@ -134,9 +135,9 @@ Click any chunk to open the practice page.
 - **/ Break**: mark meaning-group boundaries — yellow `/` appears after the word. When break marks are present, playback **auto-stops at each `/`**. Press Play to advance to the next segment. This enables phrase-by-phrase listening practice.
 
 **Recording** (headphones recommended for best accuracy):
-1. Click **Record** — playback starts from the beginning automatically. All player controls are locked during recording.
-2. Shadow along with the audio
-3. Click **Stop & Score** — your recording is transcribed and compared against the reference text
+1. Click **Record** (or **Record /** in break mode) — playback starts automatically. In break mode, playback starts from the current segment position; otherwise from the beginning. All player controls are locked during recording.
+2. Shadow along with the audio. In break mode, both playback and recording stop at the next `/` boundary.
+3. Click **Stop & Score** — your recording is transcribed and compared against the reference text. In break mode, only the current segment's text is used for scoring.
 4. View your scores:
    - **Accuracy** circle: WER-based percentage (how many words you got right)
    - **Timing** circle: prosody score (how closely your word timing followed the reference)
@@ -144,8 +145,6 @@ Click any chunk to open the practice page.
    - Average timing offset in seconds
 
 The prosody reference automatically matches your voice mode — if you practiced with Synth, timing is compared against TTS; if you used Original, it's compared against the source audio.
-
-Attempts are numbered and saved per chunk. Use the **History** dropdown to review past attempts (shows attempt number, accuracy %, and timing %).
 
 ### 4. Vocabulary
 
