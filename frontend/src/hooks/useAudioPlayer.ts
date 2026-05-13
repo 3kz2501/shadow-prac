@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 
 interface UseAudioPlayerOptions {
   onTimeUpdate?: (time: number) => void;
+  onEnded?: () => void;
   startTime?: number;
   endTime?: number;
 }
@@ -38,6 +39,7 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
     if (endTime && t >= endTime) {
       audio.pause();
       setIsPlaying(false);
+      optionsRef.current.onEnded?.();
       return;
     }
 
@@ -84,6 +86,7 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}) {
 
     audio.addEventListener("ended", () => {
       setIsPlaying(false);
+      optionsRef.current.onEnded?.();
     });
 
     audio.playbackRate = playbackRateRef.current;

@@ -366,11 +366,15 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
   color: var(--muted);
 }
 
+.btn-loop { font-size: 15px !important; padding: 10px 12px !important; border-radius: 10px !important; }
+
 .slider-controls {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 .slider-row {
   display: flex;
@@ -612,18 +616,21 @@ h4 { font-size: 14px; font-weight: 600; color: var(--text-h); margin-bottom: 4px
 
 /* Disclosure toggle */
 .toggle-disclosure {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 0;
-  border: none;
-  background: none;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: color 0.15s;
+  transition: all 0.15s;
+  margin: 8px 0;
 }
-.toggle-disclosure:hover { color: var(--text-h); }
+.toggle-disclosure:hover { border-color: var(--primary); color: var(--text-h); }
 
 .disclosure-arrow {
   display: inline-block;

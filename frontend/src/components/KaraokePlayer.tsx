@@ -40,14 +40,36 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
   const [currentTime, setCurrentTime] = useState(0);
   const [showScript, setShowScript] = useState(true);
   const [breaksActive, setBreaksActive] = useState(true);
+  const [loopActive, setLoopActive] = useState(false);
+  const loopActiveRef = useRef(false);
   const [annotations, setAnnotations] = useState<Annotations>({} as Annotations);
   const annotationsRef = useRef(annotations);
+  const prevWordRef = useRef(-1);
+
+  // Refs for values needed in onEnded callback
+  const playerRef2 = useRef<ReturnType<typeof useAudioPlayer>>(null!);
+  const useTtsRef = useRef(useTts);
+  useEffect(() => { useTtsRef.current = useTts; }, [useTts]);
+
+  const handleEnded = useCallback(() => {
+    if (loopActiveRef.current && !disabled) {
+      const t = useTtsRef.current ? 0 : chunk.start_time;
+      setTimeout(() => {
+        playerRef2.current.seek(t);
+        setCurrentTime(t);
+        prevWordRef.current = -1;
+        playerRef2.current.play();
+      }, 50);
+    }
+  }, [chunk.start_time, disabled]);
 
   const player = useAudioPlayer({
     onTimeUpdate: setCurrentTime,
+    onEnded: handleEnded,
     startTime: useTts ? undefined : chunk.start_time,
     endTime: useTts ? undefined : chunk.end_time,
   });
+  playerRef2.current = player;
 
   const hasTtsWords = chunk.tts_words && chunk.tts_words.length > 0;
   const words = useTts ? (hasTtsWords ? chunk.tts_words! : chunk.words) : chunk.words;
@@ -63,13 +85,13 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
     return result;
   }, [words, currentTime]);
 
-  // Keep ref in sync for use in time-check callback
+  // Keep refs in sync for use in time-check callbacks
   useEffect(() => { annotationsRef.current = annotations; }, [annotations]);
+  useEffect(() => { loopActiveRef.current = loopActive; }, [loopActive]);
 
   // Break boundary auto-stop: check if we crossed a break mark
   const breaksActiveRef = useRef(breaksActive);
   useEffect(() => { breaksActiveRef.current = breaksActive; }, [breaksActive]);
-  const prevWordRef = useRef(-1);
   useEffect(() => {
     if (!player.isPlaying || !breaksActiveRef.current) return;
     const breaks = annotationsRef.current.break || [];
@@ -82,19 +104,33 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
       // Check if any break mark is between prev and cur (inclusive of prev, break is "after" that word)
       for (let i = prev; i < cur; i++) {
         if (breaks.includes(i)) {
-          // Stop at the start of the next word after the break
-          const stopTime = words[i + 1]?.start;
-          if (stopTime !== undefined) {
-            player.pause();
-            player.seek(stopTime);
-            setCurrentTime(stopTime);
+          if (loopActiveRef.current && !disabled) {
+            // Loop: find segment start and seek back
+            const sortedBreaks = breaks.slice().sort((a, b) => a - b);
+            let segStart = 0;
+            for (const b of sortedBreaks) {
+              if (b >= i) break;
+              segStart = b + 1;
+            }
+            const startTime = words[segStart]?.start ?? (useTts ? 0 : chunk.start_time);
+            player.seek(startTime);
+            setCurrentTime(startTime);
+            prevWordRef.current = segStart;
+          } else {
+            // Stop at the start of the next word after the break
+            const stopTime = words[i + 1]?.start;
+            if (stopTime !== undefined) {
+              player.pause();
+              player.seek(stopTime);
+              setCurrentTime(stopTime);
+            }
           }
           break;
         }
       }
     }
     prevWordRef.current = cur;
-  }, [currentWordIndex, player.isPlaying, words]);
+  }, [currentWordIndex, player.isPlaying, words, useTts, chunk.start_time, disabled]);
 
   // Load annotations
   useEffect(() => {
@@ -311,6 +347,14 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
             </div>
           )}
         </div>
+        <button
+          className={`btn btn-sm btn-loop ${loopActive ? "btn-active" : ""}`}
+          onClick={() => setLoopActive(!loopActive)}
+          disabled={disabled}
+          title="Loop"
+        >
+          <i className="fa-solid fa-repeat" />
+        </button>
         <span className="nav-separator" />
         <button onClick={restart} className="btn btn-sm btn-nav" disabled={disabled}>Restart</button>
         <span className="nav-divider" />
@@ -342,6 +386,24 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
         </div>
       </div>
 
+      <button
+        className="toggle-disclosure"
+        onClick={() => setShowScript(!showScript)}
+      >
+        <span className={`disclosure-arrow ${showScript ? "open" : ""}`}>&#9654;</span>
+        {showScript ? "Hide Script" : "Show Script"}
+      </button>
+
+      {showScript && (
+        <WordDisplay
+          words={words}
+          currentTime={currentTime}
+          annotations={annotations}
+          onWordClick={handleWordClick}
+          onAnnotate={disabled ? undefined : handleAnnotate}
+        />
+      )}
+
       <div className={`slider-controls ${disabled ? "controls-disabled" : ""}`}>
         <div className="slider-row">
           <label>Speed: {player.playbackRate.toFixed(2)}x</label>
@@ -372,24 +434,6 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
           <button className="btn btn-sm adj-btn" disabled={disabled} onClick={() => player.changeVolume(Math.min(2.0, +(player.volume + 0.1).toFixed(1)))}>+</button>
         </div>
       </div>
-
-      <button
-        className="toggle-disclosure"
-        onClick={() => setShowScript(!showScript)}
-      >
-        <span className={`disclosure-arrow ${showScript ? "open" : ""}`}>&#9654;</span>
-        {showScript ? "Hide Script" : "Show Script"}
-      </button>
-
-      {showScript && (
-        <WordDisplay
-          words={words}
-          currentTime={currentTime}
-          annotations={annotations}
-          onWordClick={handleWordClick}
-          onAnnotate={disabled ? undefined : handleAnnotate}
-        />
-      )}
     </div>
   );
 });
