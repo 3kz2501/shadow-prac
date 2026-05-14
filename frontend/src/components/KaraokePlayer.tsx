@@ -13,6 +13,7 @@ export interface SegmentInfo {
 export interface KaraokePlayerHandle {
   restartAndPlay: () => void;
   playFromCurrent: () => void;
+  restartSegmentAndPlay: () => void;
   pause: () => void;
   isTtsMode: () => boolean;
   breaksEnabled: () => boolean;
@@ -23,6 +24,7 @@ export interface KaraokePlayerHandle {
 interface Props {
   chunk: ChunkDetail;
   disabled?: boolean;
+  onPlayStateChange?: (isPlaying: boolean) => void;
 }
 
 function getSentenceBoundaries(words: WordTiming[]): number[] {
@@ -36,7 +38,7 @@ function getSentenceBoundaries(words: WordTiming[]): number[] {
   return boundaries;
 }
 
-export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, disabled = false }, ref) => {
+export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, disabled = false, onPlayStateChange }, ref) => {
   const [useTts, setUseTts] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [showScript, setShowScript] = useState(true);
@@ -89,6 +91,7 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
   // Keep refs in sync for use in time-check callbacks
   useEffect(() => { annotationsRef.current = annotations; }, [annotations]);
   useEffect(() => { loopActiveRef.current = loopActive; }, [loopActive]);
+  useEffect(() => { onPlayStateChange?.(player.isPlaying); }, [player.isPlaying]);
 
   // Break boundary auto-stop: check if we crossed a break mark
   const breaksActiveRef = useRef(breaksActive);
@@ -218,9 +221,27 @@ export const KaraokePlayer = forwardRef<KaraokePlayerHandle, Props>(({ chunk, di
     setTimeout(() => player.play(), 50);
   };
 
+  const restartSegmentAndPlay = () => {
+    const seg = getCurrentSegment();
+    if (seg && seg.startWordIndex < words.length) {
+      const t = words[seg.startWordIndex].start;
+      player.seek(t);
+      setCurrentTime(t);
+      prevWordRef.current = seg.startWordIndex;
+    } else {
+      // Fallback: restart from chunk start
+      const t = useTts ? 0 : chunk.start_time;
+      player.seek(t);
+      setCurrentTime(t);
+      prevWordRef.current = -1;
+    }
+    setTimeout(() => player.play(), 50);
+  };
+
   useImperativeHandle(ref, () => ({
     restartAndPlay,
     playFromCurrent,
+    restartSegmentAndPlay,
     pause: player.pause,
     isTtsMode: () => useTts,
     breaksEnabled: () => breaksActive,

@@ -14,6 +14,7 @@ export function PracticePage() {
   const [chunkIdx, setChunkIdx] = useState(parseInt(searchParams.get("chunk") || "0"));
   const playerRef = useRef<KaraokePlayerHandle>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
 
   useEffect(() => {
@@ -36,8 +37,8 @@ export function PracticePage() {
   const handleRecordStart = () => {
     setIsRecording(true);
     if (playerRef.current?.breaksEnabled()) {
-      // Break mode: play from current position (already at segment start)
-      playerRef.current?.playFromCurrent();
+      // Break mode: seek to segment start, then play
+      playerRef.current?.restartSegmentAndPlay();
     } else {
       playerRef.current?.restartAndPlay();
     }
@@ -60,7 +61,7 @@ export function PracticePage() {
 
       {currentChunk ? (
         <>
-          <KaraokePlayer ref={playerRef} chunk={currentChunk} disabled={isRecording} />
+          <KaraokePlayer ref={playerRef} chunk={currentChunk} disabled={isRecording} onPlayStateChange={setIsPlaying} />
 
           <div className="practice-section">
             <h3>Shadowing Practice</h3>
@@ -70,7 +71,7 @@ export function PracticePage() {
               audioMode={playerRef.current?.isTtsMode() ? "tts" : "original"}
               segmentText={playerRef.current?.breaksEnabled() ? playerRef.current?.getCurrentSegment()?.text : undefined}
               breaksActive={playerRef.current?.breaksEnabled() ?? false}
-              isPlaying={playerRef.current?.isPlaying() ?? false}
+              isPlaying={isPlaying}
               onRecordStart={handleRecordStart}
               onRecordStop={handleRecordStop}
             />
